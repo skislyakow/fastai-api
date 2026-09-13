@@ -36,8 +36,8 @@ def mock_site(request: Request, site_id: int = 1) -> SiteResponse:
 async def stream_html_stub():
     html = HTML_STUB_PATH.read_text(encoding="utf-8")
     for i in range(0, len(html), 500):
-        yield html[i: i + 500]
-        await asyncio.sleep(0.05)
+        yield html[i : i + 500]
+        await asyncio.sleep(0.2)
 
 
 @router.get(
@@ -67,7 +67,7 @@ async def generate_site(
     site_id: int,
     request: SiteGenerationRequest,
 ) -> StreamingResponse:
-    return StreamingResponse(stream_html_stub(), media_type="text/plain")
+    return StreamingResponse(stream_html_stub(), media_type="text/html")
 
 
 @router.get(

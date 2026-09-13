@@ -42,6 +42,7 @@ class CreateSiteRequest(BaseModel):
     title: SiteTitle = Field(
         description="Название сайта",
         examples=["Мой сайт"],
+        default="",
     )
 
 
