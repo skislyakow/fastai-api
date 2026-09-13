@@ -62,11 +62,6 @@ class SiteResponse(BaseModel):
         description="Название сайта",
         examples=["Стегозавры"],
     )
-    urlPath: str = Field(
-        default="",
-        description="URL-путь сайта",
-        examples=[""],
-    )
     htmlCodeUrl: str | None = Field(
         description="Ссылка на html-код сайта",
         examples=["https://google.com"],

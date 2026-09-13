@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import APIRouter, FastAPI
@@ -24,8 +24,8 @@ def get_current_user() -> UserDetailsResponse:
         email="example@example.com",
         isActive=True,
         profileId=1,
-        registeredAt=datetime(2025, 6, 15, 18, 29, 56),
-        updatedAt=datetime(2025, 6, 15, 18, 29, 56),
+        registeredAt=datetime(2025, 6, 15, 18, 29, 56, tzinfo=timezone.utc),
+        updatedAt=datetime(2025, 6, 15, 18, 29, 56, tzinfo=timezone.utc),
         username="user123",
     )
 

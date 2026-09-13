@@ -1,9 +1,9 @@
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import APIRouter, Request
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 
 from schemas import (
     CreateSiteRequest,
@@ -28,8 +28,8 @@ def mock_site(request: Request, site_id: int = 1) -> SiteResponse:
         htmlCodeDownloadUrl=f"{base}/frontend-api/sites/{site_id}/html?download=1",
         screenshotUrl=f"{base}/frontend-api/sites/{site_id}/screenshot",
         prompt="Сделай сайт про Стегозавров",
-        createdAt=datetime(2025, 6, 15, 18, 29, 56),
-        updatedAt=datetime(2025, 6, 15, 18, 29, 56),
+        createdAt=datetime(2025, 6, 15, 18, 29, 56, tzinfo=timezone.utc),
+        updatedAt=datetime(2025, 6, 15, 18, 29, 56, tzinfo=timezone.utc),
     )
 
 
@@ -60,12 +60,26 @@ def create_site(request: Request, create_request: CreateSiteRequest) -> SiteResp
 
 @router.post(
     "/{site_id}/generate",
+    response_class=HTMLResponse,
     summary="Сгенерировать HTML код сайта",
     description="Код сайта будет транслироваться стримом по мере генерации.",
+    responses={
+        200: {
+            "description": "HTML-код сайта, передаётся стримом",
+            "content": {
+                "text/html": {
+                    "schema": {
+                        "type": "string",
+                        "example": "<!DOCTYPE html><html><body>Стегозавры</body></html>",
+                    },
+                },
+            },
+        },
+    },
 )
 async def generate_site(
     site_id: int,
-    request: SiteGenerationRequest,
+    request: SiteGenerationRequest | None = None,
 ) -> StreamingResponse:
     return StreamingResponse(stream_html_stub(), media_type="text/html")
 
@@ -94,6 +108,21 @@ def site_screenshot(request: Request, site_id: int) -> FileResponse:
     "/{site_id}",
     response_model=SiteResponse,
     summary="Получить сайт",
+    responses={
+        404: {
+            "description": "Сайт не найден",
+            "content": {
+                "application/json": {
+                    "schema": {
+                        "type": "object",
+                        "properties": {"detail": {"type": "string"}},
+                        "required": ["detail"],
+                    },
+                    "example": {"detail": "Site not found"},
+                },
+            },
+        },
+    },
 )
 def get_site(request: Request, site_id: int) -> SiteResponse:
     return mock_site(request, site_id=site_id)
