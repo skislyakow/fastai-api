@@ -6,6 +6,9 @@ class DeepSeekSettings(BaseModel):
     model_config = ConfigDict(extra="forbid")
     api_key: SecretStr
     max_connections: int | None = Field(default=None, gt=0)
+    timeout: int | None = Field(default=None, gt=0)
+    base_url: str | None = None
+    model: str | None = None
 
 
 class UnsplashSettings(BaseModel):
@@ -13,6 +16,7 @@ class UnsplashSettings(BaseModel):
     api_key: SecretStr
     max_connections: int | None = Field(default=None, gt=0)
     timeout: int | None = Field(default=None, gt=0)
+    proxy: str | None = None
 
 
 class Settings(BaseSettings):

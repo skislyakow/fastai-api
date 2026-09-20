@@ -1,10 +1,10 @@
-import asyncio
 from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import APIRouter, Request
 from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 
+from page_generator import DEFAULT_PROMPT, SITE_HTML_PATH, stream_site_html
 from schemas import (
     CreateSiteRequest,
     GeneratedSitesResponse,
@@ -31,13 +31,6 @@ def mock_site(request: Request, site_id: int = 1) -> SiteResponse:
         createdAt=datetime(2025, 6, 15, 18, 29, 56, tzinfo=timezone.utc),
         updatedAt=datetime(2025, 6, 15, 18, 29, 56, tzinfo=timezone.utc),
     )
-
-
-async def stream_html_stub():
-    html = HTML_STUB_PATH.read_text(encoding="utf-8")
-    for i in range(0, len(html), 500):
-        yield html[i : i + 500]
-        await asyncio.sleep(0.2)
 
 
 @router.get(
@@ -81,7 +74,8 @@ async def generate_site(
     site_id: int,
     request: SiteGenerationRequest | None = None,
 ) -> StreamingResponse:
-    return StreamingResponse(stream_html_stub(), media_type="text/html")
+    prompt = request.prompt if request else DEFAULT_PROMPT
+    return StreamingResponse(stream_site_html(prompt), media_type="text/html")
 
 
 @router.get(
@@ -89,8 +83,9 @@ async def generate_site(
     summary="Просмотр HTML кода сайта",
 )
 def view_site_html(request: Request, site_id: int, download: bool = False) -> FileResponse:
+    path = SITE_HTML_PATH if SITE_HTML_PATH.exists() else HTML_STUB_PATH
     return FileResponse(
-        HTML_STUB_PATH,
+        path,
         media_type="text/html",
         filename="index.html" if download else None,
     )
