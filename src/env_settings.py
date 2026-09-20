@@ -30,4 +30,4 @@ class Settings(BaseSettings):
     debug: bool = False
 
 
-settings = Settings()
+settings = Settings()  # type: ignore[reportCallIssue]

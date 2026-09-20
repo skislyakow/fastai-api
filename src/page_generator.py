@@ -5,7 +5,6 @@ import uuid
 from collections.abc import AsyncGenerator
 from datetime import datetime
 from pathlib import Path
-from pyexpat.errors import messages
 from typing import Any
 
 import anyio
@@ -44,6 +43,11 @@ DEFAULT_PROMPT = (
 MAX_ATTEMPTS = 3
 
 
+def _echo(chunk: str) -> None:
+    if settings.debug:
+        print(chunk, end="", flush=True)
+
+
 async def ainvoke_with_retry(
     agent: Any,
     message: dict[str, str],
@@ -54,7 +58,7 @@ async def ainvoke_with_retry(
     for attempt in range(1, MAX_ATTEMPTS + 1):
         try:
             return await agent.ainvoke(
-                input={"messages": [messages], "temperature": temperature},
+                input={"messages": [message], "temperature": temperature},
                 config=config,
             )
         except (json.decoder.JSONDecodeError, httpx.HTTPError) as exc:
@@ -88,8 +92,8 @@ class StreamPageGenerator(AsyncPageGenerator):
             model=client.deepseek_model,
             api_key=client.deepseek_api_key,
             http_async_client=client,
-            api_base=client.deepseek_base_url,
-            model_kwargs={"max_tokens": 16384},
+            api_base=client.deepseek_base_url,  # type: ignore[reportCallIssue]
+            max_tokens=32768,
             temperature=0.7,
         )
         self.html_page = HtmlPage()
@@ -176,12 +180,14 @@ async def stream_site_html(prompt: str) -> AsyncGenerator[str]:
         generator = StreamPageGenerator(debug_mode=settings.debug)
         try:
             async for chunk in generator.generate_html(prompt):
+                _echo(chunk)
                 yield chunk
             await generator.check_html()
             if not generator.html_page.is_valid:
                 async for chunk in generator.regenerate_html():
+                    _echo(chunk)
                     yield chunk
-        except RuntimeError as exc:
+        except Exception as exc:
             print(f"[ОШИБКА ГЕНЕРАЦИИ] {exc}", file=sys.stderr)
             if not generator.html_page.html_code:
                 yield f"<!DOCTYPE html><html><body><h1>Не удалось сгенерировать страницу</h1><p>{exc}</p></body></html>"
