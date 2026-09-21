@@ -54,14 +54,26 @@ $ cp example.env .env
 
 ### Установка и запуск MinIO
 
-1. Установите deb-пакет MinIO:
+Сервер MinIO распространяется как продукт AIStor. Скачайте deb-пакет
+(имя файла `minio_*.deb`, бинарник ставится как `/usr/local/bin/minio`)
+из официального каталога дистрибутивов:
+
+```shell
+$ wget https://dl.min.io/aistor/minio/release/linux-amd64/minio.deb
+$ sudo dpkg -i minio.deb
+```
+
+1. Настройте `/etc/default/minio`:
+   - `MINIO_VOLUMES` — каталог данных (например, `/var/lib/minio/data`);
+   - `MINIO_OPTS` — адреса API и консоли (`--address :9000 --console-address :9001`);
+   - `MINIO_CONFIG_ENV_FILE=/etc/minio/config.env` — файл дополнительной конфигурации.
+
+2. Укажите корневые учётные данные в `/etc/minio/config.env`:
 
    ```shell
-   $ sudo dpkg -i minio_*.deb
+   MINIO_ROOT_USER=<user>
+   MINIO_ROOT_PASSWORD=<password>
    ```
-
-2. Укажите путь к хранилищу в `/etc/default/minio` (переменная `MINIO_VOLUMES`)
-   и учётные данные в `/etc/minio/config.env` (`MINIO_ROOT_USER` и `MINIO_ROOT_PASSWORD`).
 
 3. Запустите сервис:
 
@@ -69,6 +81,40 @@ $ cp example.env .env
    $ sudo systemctl enable --now minio
    $ sudo systemctl status minio
    ```
+
+4. Проверьте готовность: `http://localhost:9000/minio/health/ready` должен
+   отвечать `200`.
+
+### Активация лицензии (AIStor)
+
+Без лицензии сборка AIStor блокирует все S3-операции: API отвечает
+`AccessDenied ... No license is installed ...`, а `.../minio/health/ready` — `503`.
+
+1. Получите лицензию в личном кабинете SUBNET ([https://min.io](https://min.io)):
+   для продукта AIStor доступен бесплатный Community-план (1 узел). Скачанный
+   файл `minio.license` содержит JWT — одну длинную строку без переносов.
+
+2. Добавьте содержимое файла в `/etc/minio/config.env` через переменную
+   `MINIO_LICENSE` (одной строкой, без кавычек):
+
+   ```shell
+   # содержимое minio.license:
+   MINIO_LICENSE=eyJhbGciOiJFUzM4NCIs...
+   ```
+
+3. Примените лицензию и проверьте:
+
+   ```shell
+   $ sudo systemctl restart minio
+   $ curl -sf http://localhost:9000/minio/health/ready   # → 200
+   ```
+
+> Замечание про `mc`: клиент `mc` из GitHub-релизов
+> [minio/mc](https://github.com/minio/mc) (последний — `RELEASE.2025-08-13`)
+> не понимает бесплатные лицензии AIStor (JWT без `exp`-claim) и завершается
+> ошибкой `License has expired on 0001-01-01`. Надёжный путь — активация через
+> переменную `MINIO_LICENSE`, описанная выше. Официальный клиент AIStor — `mcli`
+> (`https://dl.min.io/aistor/mc/release/linux-amd64/mcli.deb`).
 
 ### Адреса
 
