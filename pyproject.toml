@@ -5,6 +5,7 @@ description = "FastAI-API AI site generator"
 readme = "README.md"
 requires-python = "==3.13.*"
 dependencies = [
+    "aioboto3>=15.5.0",
     "editorconfig-checker==3.2.1",
     "fastapi[standard]==0.115.12",
     "html-page-generator",

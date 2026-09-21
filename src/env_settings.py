@@ -19,6 +19,15 @@ class UnsplashSettings(BaseModel):
     proxy: str | None = None
 
 
+class S3Settings(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    endpoint_url: str = "http://localhost:9000"
+    access_key_id: SecretStr | None = None
+    secret_access_key: SecretStr | None = None
+    bucket_name: str = "fastai-sites"
+    region_name: str = "us-east-1"
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -28,6 +37,7 @@ class Settings(BaseSettings):
     deepseek: DeepSeekSettings
     unsplash: UnsplashSettings
     debug: bool = False
+    s3: S3Settings | None = None
 
 
 settings = Settings()  # type: ignore[reportCallIssue]
