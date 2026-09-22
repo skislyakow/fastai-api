@@ -22,8 +22,8 @@ class UnsplashSettings(BaseModel):
 class S3Settings(BaseModel):
     model_config = ConfigDict(extra="forbid")
     endpoint_url: str = "http://localhost:9000"
-    access_key_id: SecretStr | None = None
-    secret_access_key: SecretStr | None = None
+    access_key_id: SecretStr
+    secret_access_key: SecretStr
     bucket_name: str = "fastai-sites"
     region_name: str = "us-east-1"
 
@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     deepseek: DeepSeekSettings
     unsplash: UnsplashSettings
     debug: bool = False
-    s3: S3Settings | None = None
+    s3: S3Settings
 
 
 settings = Settings()  # type: ignore[reportCallIssue]

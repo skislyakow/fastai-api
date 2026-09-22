@@ -1,16 +1,39 @@
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
+import aioboto3
+from botocore.config import Config
 from fastapi import APIRouter, FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from env_settings import settings
 from routers.sites import router as sites_router
+from s3_client import ensure_bucket
 from schemas import UserDetailsResponse
 
 STATIC_DIR = Path(__file__).parent / "static"
 
-app = FastAPI(docs_url="/frontend-api/docs")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> Any:
+    session = aioboto3.Session()
+    client = session.client(
+        "s3",
+        endpoint_url=settings.s3.endpoint_url,
+        aws_access_key_id=settings.s3.access_key_id.get_secret_value(),
+        aws_secret_access_key=settings.s3.secret_access_key.get_secret_value(),
+        region_name=settings.s3.region_name,
+        config=Config(signature_version="s3v4"),
+    )
+    async with client as s3:
+        await ensure_bucket(s3, settings.s3.bucket_name)
+        app.state.s3 = s3
+        yield
+
+
+app = FastAPI(docs_url="/frontend-api/docs", lifespan=lifespan)
 
 router = APIRouter(tags=["Users"])
 

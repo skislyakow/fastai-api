@@ -1,7 +1,6 @@
 import argparse
 import asyncio
 import json
-import sys
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote, urlencode
@@ -93,24 +92,14 @@ async def print_head(s3: Any, bucket: str, key: str) -> None:
 
 async def main() -> None:
     s3_settings = settings.s3
-    if s3_settings is None:
-        print("S3__* не заданы в .env - заполните из example.env", file=sys.stderr)
-        sys.exit(1)
-
-    access_key_id = s3_settings.access_key_id
-    secret_access_key = s3_settings.secret_access_key
-    if access_key_id is None or secret_access_key is None:
-        print("S3__ACCESS_KEY_ID и S3__SECRET_ACCESS_KEY обязательны", file=sys.stderr)
-        sys.exit(1)
-
     bucket = s3_settings.bucket_name
     endpoint_url = s3_settings.endpoint_url
 
     s3_cm: Any = aioboto3.Session().client(
         "s3",
         endpoint_url=endpoint_url,
-        aws_access_key_id=access_key_id.get_secret_value(),
-        aws_secret_access_key=secret_access_key.get_secret_value(),
+        aws_access_key_id=s3_settings.access_key_id.get_secret_value(),
+        aws_secret_access_key=s3_settings.secret_access_key.get_secret_value(),
         region_name=s3_settings.region_name,
         config=Config(signature_version="s3v4"),
     )
