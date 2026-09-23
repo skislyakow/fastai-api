@@ -169,8 +169,27 @@ http://localhost:9000/<bucket>/<key>?response-content-disposition=attachment;%20
 
 ### Ручная загрузка файла
 
-1. Загрузите HTML-файл через веб-интерфейс (`:9001`).
-2. Откройте его по ссылке `{endpoint}/{bucket}/{key}` — файл откроется в браузере.
+Фронтенд показывает превью сгенерированных сайтов и скриншоты по ссылкам из
+API (`htmlCodeUrl`, `screenshotUrl`), поэтому в бакете `fastai-sites` должны
+лежать, например, такие файлы:
+
+- `sites/1/index.html` — HTML демо-сайта;
+- `screenshot.jpg` — скриншот-превью.
+
+Публичные адреса:
+
+```
+http://localhost:9000/fastai-sites/sites/1/index.html
+http://localhost:9000/fastai-sites/screenshot.jpg
+```
+
+Формат адреса: `{endpoint}/{bucket}/{key}`. Пока файлы не загружены в бакет,
+ссылки вернут `404` и фронтенд будет выглядеть сломанным.
+
+Загрузка через веб-интерфейс (`:9001`):
+
+1. Загрузите файлы: HTML — в папку `sites/1/`, скриншот — в корень бакета.
+2. Откройте файл по публичной ссылке — файл откроется в браузере.
 3. Добавьте к ссылке параметр `response-content-disposition`,
    например `attachment; filename="site.html"` — файл скачается.
 
