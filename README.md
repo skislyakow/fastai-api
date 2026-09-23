@@ -169,15 +169,16 @@ http://localhost:9000/<bucket>/<key>?response-content-disposition=attachment;%20
 
 ### Переменные окружения
 
-Переменные группы `S3` готовятся к добавлению в код и будут читаться через
-Pydantic Settings:
+Группа `S3` обязательна и читается через Pydantic Settings (`Settings.s3`).
+Ключи `S3__ACCESS_KEY_ID` и `S3__SECRET_ACCESS_KEY` не имеют значений по
+умолчанию — их обязательно нужно указать в `.env`.
 
 | Переменная | Обязательная | По умолчанию | Описание |
 |---|---|---|---|
 | `S3__ENDPOINT_URL` | нет | `http://localhost:9000` | Адрес S3-совместимого API |
 | `S3__ACCESS_KEY_ID` | да | — | AWS Access Key (`MINIO_ROOT_USER`) |
 | `S3__SECRET_ACCESS_KEY` | да | — | AWS Secret Key (`MINIO_ROOT_PASSWORD`) |
-| `S3__BUCKET_NAME` | да | — | Имя бакета |
+| `S3__BUCKET_NAME` | нет | `fastai-sites` | Имя бакета |
 | `S3__REGION_NAME` | нет | `us-east-1` | Регион S3 |
 
 ### Полезные ссылки
