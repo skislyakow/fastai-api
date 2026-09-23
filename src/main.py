@@ -1,3 +1,4 @@
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -17,17 +18,26 @@ STATIC_DIR = Path(__file__).parent / "static"
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> Any:
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     session = aioboto3.Session()
-    client = session.client(
+    config_kwargs: dict[str, Any] = {"signature_version": "s3v4"}
+    for src, dst in (
+        (settings.s3.connect_timeout, "connect_timeout"),
+        (settings.s3.read_timeout, "read_timeout"),
+        (settings.s3.max_pool_connections, "max_pool_connections"),
+    ):
+        if src is not None:
+            config_kwargs[dst] = src
+
+    s3_cm: Any = session.client(
         "s3",
         endpoint_url=settings.s3.endpoint_url,
         aws_access_key_id=settings.s3.access_key_id.get_secret_value(),
         aws_secret_access_key=settings.s3.secret_access_key.get_secret_value(),
         region_name=settings.s3.region_name,
-        config=Config(signature_version="s3v4"),
+        config=Config(**config_kwargs),
     )
-    async with client as s3:
+    async with s3_cm as s3:
         await ensure_bucket(s3, settings.s3.bucket_name)
         app.state.s3 = s3
         yield

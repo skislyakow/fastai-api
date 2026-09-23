@@ -26,6 +26,9 @@ class S3Settings(BaseModel):
     secret_access_key: SecretStr
     bucket_name: str = "fastai-sites"
     region_name: str = "us-east-1"
+    connect_timeout: int | None = Field(default=None, gt=0)
+    read_timeout: int | None = Field(default=None, gt=0)
+    max_pool_connections: int | None = Field(default=None, gt=0)
 
 
 class Settings(BaseSettings):
