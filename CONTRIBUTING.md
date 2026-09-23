@@ -277,6 +277,37 @@ http://localhost:9000/fastai-sites/screenshot.jpg       — скриншот
 Формат адреса: `{S3__ENDPOINT_URL}/{S3__BUCKET_NAME}/{key}`. Примеры адресов
 из задачи иллюстративные — используйте реальные ключи проекта.
 
+#### Загрузка файлов из python-кода
+
+Пример кодовой загрузки в бакет — `src/prototype_s3.py`. Он читает настройки
+S3 из `.env`, создаёт бакет, применяет публичную политику и загружает файлы:
+
+```shell
+$ uv run python src/prototype_s3.py
+```
+
+При загрузке через `put_object` обязательно указывайте:
+
+- `ContentType` — MIME-тип файла;
+- `ContentDisposition="inline"` — файл открывается в браузере по публичной
+  ссылке (без него браузер предложит скачать файл).
+
+MIME-типы, используемые в проекте:
+
+- `text/html` — HTML-файлы (например, `hello.html`, `sites/1/index.html`);
+- `image/jpeg` — скриншоты (`screenshot.jpg`).
+
+В коде приложения загрузка уже реализована в `upload_html()`
+(`src/s3_client.py`): она указывает `ContentType="text/html"` и
+`ContentDisposition="inline"`.
+
+Публичные адреса после загрузки:
+
+```
+http://localhost:9000/fastai-sites/hello.html
+http://localhost:9000/fastai-sites/screenshot.jpg
+```
+
 Ключи в бакете:
 
 - `sites/{site_id}/index.html` — сгенерированный HTML сайта (перезаписывается

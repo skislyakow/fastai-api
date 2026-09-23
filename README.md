@@ -150,10 +150,15 @@ CONTRIBUTING).
 
 ### MIME-типы и Content-Disposition
 
-При загрузке файлов в бакет обязательно указывайте MIME-тип:
+При загрузке файлов в бакет из кода (`put_object`) обязательно указывайте
+`ContentType` (MIME-тип) и `ContentDisposition="inline"`:
 
 - `text/html` — для HTML-файлов;
+- `image/jpeg` — для скриншотов (например, `screenshot.jpg`);
 - `image/png` — для изображений в формате PNG.
+
+Пример кодовой загрузки — `src/prototype_s3.py` (запуск: `uv run python
+src/prototype_s3.py`).
 
 `Content-Disposition` определяет способ доступа к файлу по публичной ссылке:
 
