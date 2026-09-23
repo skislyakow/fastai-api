@@ -185,6 +185,10 @@ http://127.0.0.1:8000/
    S3__ACCESS_KEY_ID=<MINIO_ROOT_USER>
    S3__SECRET_ACCESS_KEY=<MINIO_ROOT_PASSWORD>
    S3__BUCKET_NAME=fastai-sites
+   # Необязательные: таймауты и лимит подключений
+   S3__CONNECT_TIMEOUT=5
+   S3__READ_TIMEOUT=60
+   S3__MAX_POOL_CONNECTIONS=10
    ```
 3. Бакет создаётся автоматически при старте приложения (lifespan в `src/main.py`):
    на запуске вызывается `ensure_bucket`, который создаёт бакет и применяет

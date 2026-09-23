@@ -180,6 +180,9 @@ http://localhost:9000/<bucket>/<key>?response-content-disposition=attachment;%20
 | `S3__SECRET_ACCESS_KEY` | да | — | AWS Secret Key (`MINIO_ROOT_PASSWORD`) |
 | `S3__BUCKET_NAME` | нет | `fastai-sites` | Имя бакета |
 | `S3__REGION_NAME` | нет | `us-east-1` | Регион S3 |
+| `S3__CONNECT_TIMEOUT` | нет | — (дефолт botocore, 60 с) | Таймаут подключения, сек |
+| `S3__READ_TIMEOUT` | нет | — (дефолт botocore, 60 с) | Таймаут чтения, сек |
+| `S3__MAX_POOL_CONNECTIONS` | нет | — (дефолт botocore, 10) | Лимит одновременных подключений |
 
 ### Полезные ссылки
 
