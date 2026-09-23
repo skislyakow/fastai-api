@@ -61,9 +61,10 @@ $ cp example.env .env
 ```shell
 $ wget https://dl.min.io/aistor/minio/release/linux-amd64/minio.deb
 $ sudo dpkg -i minio.deb
+$ minio --version   # проверка установки: выводит версию сервера
 ```
 
-1. Настройте `/etc/default/minio`:
+1. Настройте `/etc/default/minio`:`
    - `MINIO_VOLUMES` — каталог данных (например, `/var/lib/minio/data`);
    - `MINIO_OPTS` — адреса API и консоли (`--address :9000 --console-address :9001`);
    - `MINIO_CONFIG_ENV_FILE=/etc/minio/config.env` — файл дополнительной конфигурации.
@@ -140,6 +141,12 @@ $ sudo dpkg -i minio.deb
 2. Создайте бакет (раздел **Create Bucket**) — имя должно совпадать с `S3__BUCKET_NAME`.
 3. Сделайте бакет публичным с помощью публичной bucket-политики, иначе файлы не будут
    доступны по ссылке без авторизации.
+
+В списке бакетов у `fastai-sites` отображается тип доступа **PUBLIC** (раздел
+**Access Policy** — `public`). Новый бакет пуст: объекты появляются после ручной
+загрузки или генерации сайта. Если приложение уже запущено, бакет создаётся и
+становится публичным автоматически (`ensure_bucket` при старте, см.
+CONTRIBUTING).
 
 ### MIME-типы и Content-Disposition
 

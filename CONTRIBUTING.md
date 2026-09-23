@@ -169,31 +169,91 @@ http://127.0.0.1:8000/
 
 Проект сохраняет сгенерированные сайты в S3-совместимое хранилище.
 Локально для этого используется [MinIO](https://min.io/) (продукт AIStor).
-Подробная инструкция по установке, активации лицензии и настройке — в
-[README](/README.md#работа-с-s3-minio). Ниже — краткая выжимка для разработки.
+Подробная инструкция по установке и активации лицензии — в
+[README](/README.md#работа-с-s3-minio). Ниже — пошаговый чек-лист для
+разработчика: пройдите шаги по порядку и проверьте результат.
 
-1. Установите MinIO, настройте `/etc/default/minio` и `/etc/minio/config.env`
-   (учётные данные + `MINIO_LICENSE`) и запустите сервис:
-   ```shell
-   $ sudo systemctl enable --now minio
-   $ curl -sf http://localhost:9000/minio/health/ready   # → 200
-   ```
-2. Заполните в `.env` группу `S3` (обязательна, значения по умолчанию смотрите в
-   `src/env_settings.py`):
-   ```shell
-   S3__ENDPOINT_URL=http://localhost:9000
-   S3__ACCESS_KEY_ID=<MINIO_ROOT_USER>
-   S3__SECRET_ACCESS_KEY=<MINIO_ROOT_PASSWORD>
-   S3__BUCKET_NAME=fastai-sites
-   # Необязательные: таймауты и лимит подключений
-   S3__CONNECT_TIMEOUT=5
-   S3__READ_TIMEOUT=60
-   S3__MAX_POOL_CONNECTIONS=10
-   ```
-3. Бакет создаётся автоматически при старте приложения (lifespan в `src/main.py`):
-   на запуске вызывается `ensure_bucket`, который создаёт бакет и применяет
-   публичную bucket-политику, поэтому файлы доступны по прямой ссылке без
-   авторизации.
+#### 1. Установка
+
+Скачайте deb-пакет MinIO (AIStor) и установите его — команды в разделе
+«Установка и запуск MinIO» [README](/README.md#установка-и-запуск-minio).
+
+Проверьте, что MinIO установлен:
+
+```shell
+$ minio --version   # выводит версию сервера
+```
+
+#### 2. Настройка и данные для авторизации
+
+Настройте `/etc/default/minio` и укажите в `/etc/minio/config.env` учётные
+данные и лицензию:
+
+```shell
+MINIO_ROOT_USER=<user>
+MINIO_ROOT_PASSWORD=<password>
+MINIO_LICENSE=<содержимое minio.license>
+```
+
+`MINIO_ROOT_USER` и `MINIO_ROOT_PASSWORD` — это также логин и пароль для входа
+в веб-интерфейс.
+
+#### 3. Запуск
+
+Запустите сервис и проверьте, что он работает:
+
+```shell
+$ sudo systemctl enable --now minio
+$ sudo systemctl status minio          # Active: active (running)
+$ curl -sf http://localhost:9000/minio/health/ready   # → 200
+```
+
+#### 4. Адреса
+
+- **API** — `http://localhost:9000`
+- **Веб-интерфейс** — `http://localhost:9001`
+
+При открытии адреса API в браузере происходит автоматический редирект в
+веб-интерфейс.
+
+#### 5. Вход в веб-интерфейс
+
+Откройте `http://localhost:9001` и войдите под учётными данными
+`MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD`.
+
+#### 6. Проверка бакета
+
+В разделе **Buckets** найдите бакет `fastai-sites`:
+
+- тип доступа у бакета — **PUBLIC**;
+- список объектов пуст — первый объект появится после ручной загрузки или
+  генерации сайта.
+
+Если бакета ещё нет, создайте его через веб-интерфейс (имя должно быть равно
+`S3__BUCKET_NAME`), при создании выбрав публичный доступ. Либо пропустите этот
+шаг — бакет создастся автоматически при старте приложения (см. шаг 7).
+
+#### 7. Настройка бэкенда
+
+Заполните в `.env` группу `S3` (обязательна, значения по умолчанию смотрите
+в `src/env_settings.py`):
+
+```shell
+S3__ENDPOINT_URL=http://localhost:9000
+S3__ACCESS_KEY_ID=<MINIO_ROOT_USER>
+S3__SECRET_ACCESS_KEY=<MINIO_ROOT_PASSWORD>
+S3__BUCKET_NAME=fastai-sites
+# Необязательные: таймауты и лимит подключений
+S3__CONNECT_TIMEOUT=5
+S3__READ_TIMEOUT=60
+S3__MAX_POOL_CONNECTIONS=10
+```
+
+При старте приложения (`lifespan` в `src/main.py`) вызывается `ensure_bucket`:
+он создаёт бакет, если его нет, и применяет публичную bucket-политику, поэтому
+файлы доступны по прямой ссылке без авторизации.
+
+#### Ручная загрузка первых файлов
 
 Первые файлы, которых ещё нет в бакете, загрузите вручную через веб-интерфейс
 `http://localhost:9001` (иначе ссылки на них вернут `404`):
