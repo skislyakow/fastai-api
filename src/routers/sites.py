@@ -7,7 +7,9 @@ from typing import Any
 from fastapi import APIRouter, Request
 from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 
+from env_settings import settings
 from page_generator import DEFAULT_PROMPT, SITE_HTML_PATH, stream_site_html
+from s3_client import SCREENSHOT_KEY, object_url, site_html_key, upload_html
 from schemas import (
     CreateSiteRequest,
     GeneratedSitesResponse,
@@ -26,6 +28,20 @@ _BACKGROUND_TASKS: set[asyncio.Task[None]] = set()
 router = APIRouter(prefix="/sites", tags=["Sites"])
 
 
+def _s3_urls(site_id: int) -> tuple[str, str, str]:
+    s3 = settings.s3
+    html_key = site_html_key(site_id)
+    html_url = object_url(s3.endpoint_url, s3.bucket_name, html_key)
+    download_url = object_url(
+        s3.endpoint_url,
+        s3.bucket_name,
+        html_key,
+        attachment_filename="index.html",
+    )
+    screenshot_url = object_url(s3.endpoint_url, s3.bucket_name, SCREENSHOT_KEY)
+    return html_url, download_url, screenshot_url
+
+
 def _next_id() -> int:
     return max(_SITES, default=0) + 1
 
@@ -36,35 +52,64 @@ def _run_in_background(coro: Any) -> None:
     task.add_done_callback(_BACKGROUND_TASKS.discard)
 
 
+async def _relay_html(
+    queue: asyncio.Queue[str | None],
+    *,
+    prompt: str,
+    s3: Any,
+    bucket: str,
+    site_id: int,
+) -> None:
+    try:
+        async for chunk in stream_site_html(prompt):
+            await queue.put(chunk)
+        if SITE_HTML_PATH.exists():
+            html_code = SITE_HTML_PATH.read_text(encoding="utf-8")
+            await upload_html(s3, bucket, site_html_key(site_id), html_code)
+        if site_id in _SITES:
+            _SITES[site_id] = _SITES[site_id].model_copy(
+                update={"updatedAt": datetime.now(timezone.utc)},
+            )
+    finally:
+        await queue.put(None)
+
+
+async def _stream_queue(queue: asyncio.Queue[str | None]) -> AsyncGenerator[str]:
+    while True:
+        chunk = await queue.get()
+        if chunk is None:
+            break
+        yield chunk
+
+
 def build_site(
-    request: Request,
     site_id: int,
     *,
     title: str,
     prompt: str,
 ) -> SiteResponse:
-    base = str(request.base_url).rstrip("/")
+    html_url, download_url, screenshot_url = _s3_urls(site_id)
     now = datetime.now(timezone.utc)
     return SiteResponse(
         id=site_id,
         title=title,
-        htmlCodeUrl=f"{base}/frontend-api/sites/{site_id}/html",
-        htmlCodeDownloadUrl=f"{base}/frontend-api/sites/{site_id}/html?download=1",
-        screenshotUrl=f"{base}/frontend-api/sites/{site_id}/screenshot",
+        htmlCodeUrl=html_url,
+        htmlCodeDownloadUrl=download_url,
+        screenshotUrl=screenshot_url,
         prompt=prompt,
         createdAt=now,
         updatedAt=now,
     )
 
 
-def mock_site(request: Request, site_id: int = 1) -> SiteResponse:
-    base = str(request.base_url).rstrip("/")
+def mock_site(site_id: int = 1) -> SiteResponse:
+    html_url, download_url, screenshot_url = _s3_urls(site_id)
     return SiteResponse(
         id=site_id,
         title="Стегозавры",
-        htmlCodeUrl=f"{base}/frontend-api/sites/{site_id}/html",
-        htmlCodeDownloadUrl=f"{base}/frontend-api/sites/{site_id}/html?download=1",
-        screenshotUrl=f"{base}/frontend-api/sites/{site_id}/screenshot",
+        htmlCodeUrl=html_url,
+        htmlCodeDownloadUrl=download_url,
+        screenshotUrl=screenshot_url,
         prompt="Сделай сайт про Стегозавров",
         createdAt=datetime(2025, 6, 15, 18, 29, 56, tzinfo=timezone.utc),
         updatedAt=datetime(2025, 6, 15, 18, 29, 56, tzinfo=timezone.utc),
@@ -76,8 +121,8 @@ def mock_site(request: Request, site_id: int = 1) -> SiteResponse:
     response_model=GeneratedSitesResponse,
     summary="Получить список сгенерированных сайтов текущего пользователя",
 )
-def get_user_sites(request: Request) -> GeneratedSitesResponse:
-    return GeneratedSitesResponse(sites=[mock_site(request)])
+def get_user_sites() -> GeneratedSitesResponse:
+    return GeneratedSitesResponse(sites=[mock_site()])
 
 
 @router.post(
@@ -86,13 +131,11 @@ def get_user_sites(request: Request) -> GeneratedSitesResponse:
     summary="Создать сайт",
 )
 def create_site(
-    request: Request,
     create_request: CreateSiteRequest,
 ) -> SiteResponse:
     site_id = _next_id()
     title = create_request.title or create_request.prompt[:128]
     _SITES[site_id] = build_site(
-        request,
         site_id,
         title=title,
         prompt=create_request.prompt,
@@ -121,32 +164,21 @@ def create_site(
 )
 async def generate_site(
     site_id: int,
-    request: SiteGenerationRequest | None = None,
+    request: Request,
+    payload: SiteGenerationRequest | None = None,
 ) -> StreamingResponse:
-    prompt = request.prompt if request else DEFAULT_PROMPT
+    prompt = payload.prompt if payload else DEFAULT_PROMPT
     queue: asyncio.Queue[str | None] = asyncio.Queue()
-
-    async def relay() -> None:
-        try:
-            async for chunk in stream_site_html(prompt):
-                await queue.put(chunk)
-            if site_id in _SITES:
-                _SITES[site_id] = _SITES[site_id].model_copy(
-                    update={"updatedAt": datetime.now(timezone.utc)},
-                )
-        finally:
-            await queue.put(None)
-
-    _run_in_background(relay())
-
-    async def stream() -> AsyncGenerator[str]:
-        while True:
-            chunk = await queue.get()
-            if chunk is None:
-                break
-            yield chunk
-
-    return StreamingResponse(stream(), media_type="text/html")
+    _run_in_background(
+        _relay_html(
+            queue,
+            prompt=prompt,
+            s3=request.app.state.s3,
+            bucket=settings.s3.bucket_name,
+            site_id=site_id,
+        ),
+    )
+    return StreamingResponse(_stream_queue(queue), media_type="text/html")
 
 
 @router.get(
@@ -194,5 +226,5 @@ def site_screenshot(request: Request, site_id: int) -> FileResponse:
         },
     },
 )
-def get_site(request: Request, site_id: int) -> SiteResponse:
-    return _SITES.get(site_id) or mock_site(request, site_id=site_id)
+def get_site(site_id: int) -> SiteResponse:
+    return _SITES.get(site_id) or mock_site(site_id=site_id)
