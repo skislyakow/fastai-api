@@ -8,7 +8,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 
 from env_settings import settings
-from page_generator import DEFAULT_PROMPT, SITE_HTML_PATH, stream_site_html
+from page_generator import SITE_HTML_PATH, stream_site_html
 from s3_client import SCREENSHOT_KEY, object_url, site_html_key, upload_html
 from schemas import (
     CreateSiteRequest,
@@ -165,9 +165,9 @@ def create_site(
 async def generate_site(
     site_id: int,
     request: Request,
-    payload: SiteGenerationRequest | None = None,
+    payload: SiteGenerationRequest,
 ) -> StreamingResponse:
-    prompt = payload.prompt if payload else DEFAULT_PROMPT
+    prompt = payload.prompt
     queue: asyncio.Queue[str | None] = asyncio.Queue()
     _run_in_background(
         _relay_html(
