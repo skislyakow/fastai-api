@@ -64,7 +64,7 @@ $ sudo dpkg -i minio.deb
 $ minio --version   # проверка установки: выводит версию сервера
 ```
 
-1. Настройте `/etc/default/minio`:`
+1. Настройте `/etc/default/minio`:
    - `MINIO_VOLUMES` — каталог данных (например, `/var/lib/minio/data`);
    - `MINIO_OPTS` — адреса API и консоли (`--address :9000 --console-address :9001`);
    - `MINIO_CONFIG_ENV_FILE=/etc/minio/config.env` — файл дополнительной конфигурации.
@@ -198,11 +198,36 @@ http://localhost:9000/fastai-sites/screenshot.jpg
 3. Добавьте к ссылке параметр `response-content-disposition`,
    например `attachment; filename="site.html"` — файл скачается.
 
-### Переменные окружения
+### Настройка подключения к S3 (.env)
 
-Группа `S3` обязательна и читается через Pydantic Settings (`Settings.s3`).
-Ключи `S3__ACCESS_KEY_ID` и `S3__SECRET_ACCESS_KEY` не имеют значений по
-умолчанию — их обязательно нужно указать в `.env`.
+Приложение читает настройки S3 из файла `.env`: переменные объединяются в
+группу по общему префиксу `S3__`.
+
+1. Скопируйте шаблон:
+
+   ```shell
+   $ cp example.env .env
+   ```
+
+2. Заполните обязательные переменные группы `S3`. Минимальный набор для
+   локального MinIO:
+
+   ```dotenv
+   # группа S3
+   S3__ENDPOINT_URL=http://localhost:9000
+   S3__ACCESS_KEY_ID=<MINIO_ROOT_USER>
+   S3__SECRET_ACCESS_KEY=<MINIO_ROOT_PASSWORD>
+   S3__BUCKET_NAME=fastai-sites
+   S3__REGION_NAME=us-east-1
+   S3__CONNECT_TIMEOUT=5
+   S3__READ_TIMEOUT=60
+   S3__MAX_POOL_CONNECTIONS=10
+   ```
+
+3. Запустите приложение: в консоли появится JSON всех настроек, а секретные
+   значения (`S3__ACCESS_KEY_ID`, `S3__SECRET_ACCESS_KEY`) выводятся звёздочками.
+
+#### Переменные группы `S3`
 
 | Переменная | Обязательная | По умолчанию | Описание |
 |---|---|---|---|
