@@ -18,6 +18,12 @@ def public_policy(bucket: str) -> str:
             {
                 "Effect": "Allow",
                 "Principal": {"AWS": ["*"]},
+                "Action": ["s3:GetBucketLocation", "s3:ListBucket"],
+                "Resource": [f"arn:aws:s3:::{bucket}"],
+            },
+            {
+                "Effect": "Allow",
+                "Principal": {"AWS": ["*"]},
                 "Action": ["s3:GetObject"],
                 "Resource": [f"arn:aws:s3:::{bucket}/*"],
             },
