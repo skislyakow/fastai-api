@@ -66,3 +66,18 @@ async def upload_html(s3: Any, bucket: str, key: str, html_code: str) -> None:
         ContentType="text/html",
         ContentDisposition="inline",
     )
+
+
+async def upload_screenshot(
+    s3: Any,
+    bucket: str,
+    key: str,
+    jpeg_bytes: bytes,
+) -> None:
+    await s3.put_object(
+        Bucket=bucket,
+        Key=key,
+        Body=jpeg_bytes,
+        ContentType="image/jpeg",
+        ContentDisposition="inline",
+    )

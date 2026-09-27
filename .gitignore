@@ -1,4 +1,5 @@
 .env
+/index.html
 .venv/
 env/
 venv/

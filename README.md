@@ -34,6 +34,11 @@ $ cp example.env .env
 | `UNSPLASH__MAX_CONNECTIONS` | нет | `None` | Максимальное количество соединений |
 | `UNSPLASH__TIMEOUT` | нет | `None` | Таймаут соединения, секунды |
 | `UNSPLASH__PROXY` | нет | `None` | HTTP-прокси для запросов к Unsplash |
+| `GOTENBERG__ENDPOINT_URL` | нет | `https://demo.gotenberg.dev` | URL API Gotenberg для скриншотов |
+| `GOTENBERG__TIMEOUT` | нет | `15` | Таймаут клиента Gotenberg, сек (на 2–5 сек больше `WAIT_DELAY`) |
+| `GOTENBERG__WIDTH` | нет | `1280` | Ширина скриншота, пикс |
+| `GOTENBERG__WAIT_DELAY` | нет | `2` | Пауза на загрузку анимаций страницы, сек |
+| `GOTENBERG__DEFAULT_SCREENSHOT_FORMAT` | нет | `jpeg` | Формат скриншота: `png`, `jpeg`, `webp` |
 | `DEBUG` | нет | `false` | Режим отладки |
 
 ### Откуда взять значения
@@ -45,6 +50,37 @@ $ cp example.env .env
   `DEEPSEEK__MODEL` (например, `deepseek/deepseek-chat`).
 - **Unsplash Access Key**: [https://unsplash.com/developers](https://unsplash.com/developers) —
   зарегистрируйте приложение и скопируйте его `Access Key`.
+- **Gotenberg**: используется публичный демо-API
+  `https://demo.gotenberg.dev` (проверка доступности —
+  `GET /health`). Для локального сервера укажите свой URL в
+  `GOTENBERG__ENDPOINT_URL`.
+
+## Генерация скриншотов (Gotenberg)
+
+После завершения генерации HTML приложение рендерит скриншот страницы через
+[Gotenberg](https://gotenberg.dev/) — сервис, который превращает HTML в JPEG из
+headless-браузера.
+
+Как это работает:
+
+1. `_relay_html()` в `src/routers/sites.py` после сохранения HTML вызывает
+   `render_screenshot()` из `src/gotenberg_client.py`.
+2. `render_screenshot()` отправляет итоговый HTML в Gotenberg
+   (`ScreenshotHTMLRequest`, пакет `gotenberg-api`) и возвращает JPEG-байты.
+3. `upload_screenshot()` из `src/s3_client.py` загружает их в бакет по
+   постоянному ключу `screenshot.jpg` с `ContentType="image/jpeg"` и
+   `ContentDisposition="inline"`.
+
+Ключ `screenshot.jpg` фиксированный, поэтому `screenshotUrl` в ответах API **не
+меняется** — при каждой генерации перезаписывается только содержимое объекта.
+
+Если Gotenberg недоступен или рендер завершился ошибкой, `render_screenshot()`
+возвращает `None`, а генерация сайта продолжается: HTML сохраняется, скриншот
+остаётся прежним.
+
+Правило таймаутов: `GOTENBERG__TIMEOUT` должен быть на 2–5 секунд больше
+`GOTENBERG__WAIT_DELAY`, иначе страница не успеет догрузить анимации до
+создания кадра.
 
 ## Работа с S3 (MinIO)
 
@@ -175,8 +211,9 @@ http://localhost:9000/<bucket>/<key>?response-content-disposition=attachment;%20
 ### Ручная загрузка файла
 
 Фронтенд показывает превью сгенерированных сайтов и скриншоты по ссылкам из
-API (`htmlCodeUrl`, `screenshotUrl`), поэтому в бакете `fastai-sites` должны
-лежать, например, такие файлы:
+API (`htmlCodeUrl`, `screenshotUrl`). При запуске приложения файлов в бакете ещё
+нет, поэтому до первой генерации в `fastai-sites` вручную кладут, например,
+такие файлы:
 
 - `sites/1/index.html` — HTML демо-сайта;
 - `screenshot.jpg` — скриншот-превью.
@@ -189,7 +226,9 @@ http://localhost:9000/fastai-sites/screenshot.jpg
 ```
 
 Формат адреса: `{endpoint}/{bucket}/{key}`. Пока файлы не загружены в бакет,
-ссылки вернут `404` и фронтенд будет выглядеть сломанным.
+ссылки вернут `404` и фронтенд будет выглядеть сломанным. После первой
+генерации сайта HTML и `screenshot.jpg` заливаются приложением автоматически
+(см. раздел «Генерация скриншотов (Gotenberg)»).
 
 Загрузка через веб-интерфейс (`:9001`):
 

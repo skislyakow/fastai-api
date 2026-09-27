@@ -253,6 +253,30 @@ S3__MAX_POOL_CONNECTIONS=10
 он создаёт бакет, если его нет, и применяет публичную bucket-политику, поэтому
 файлы доступны по прямой ссылке без авторизации.
 
+#### Настройка Gotenberg (генерация скриншотов)
+
+После каждой генерации сайта приложение рендерит его скриншот через
+[Gotenberg](https://gotenberg.dev/): итоговый HTML отправляется в
+`render_screenshot()` (`src/gotenberg_client.py`), а готовый JPEG загружается
+в бакет через `upload_screenshot()` (`src/s3_client.py`) по постоянному ключу
+`SCREENSHOT_KEY = "screenshot.jpg"`.
+
+Заполните в `.env` группу `Gotenberg` (все поля необязательны, значения по
+умолчанию смотрите в `src/env_settings.py`):
+
+```shell
+GOTENBERG__ENDPOINT_URL=https://demo.gotenberg.dev
+GOTENBERG__TIMEOUT=15   # на 2-5 сек больше WAIT_DELAY
+GOTENBERG__WIDTH=1280
+GOTENBERG__WAIT_DELAY=2
+GOTENBERG__DEFAULT_SCREENSHOT_FORMAT=jpeg   # png | jpeg | webp
+```
+
+По умолчанию используется публичный демо-API `https://demo.gotenberg.dev`
+(проверка доступности — `GET /health`). Если Gotenberg недоступен,
+`render_screenshot()` возвращает `None`: генерация сайта продолжается, а на
+месте скриншота сохраняется прежнее изображение.
+
 #### Ручная загрузка первых файлов
 
 Фронтенд показывает превью сгенерированных сайтов: код HTML и скриншот. Ссылки
@@ -270,6 +294,10 @@ S3__MAX_POOL_CONNECTIONS=10
 
 - `sites/1/index.html` — дефолтный HTML демо-сайта, загружайте в папку `sites/1/`;
 - `screenshot.jpg` — общий скриншот для всех сайтов, загружайте в корень бакета.
+
+Оба файла нужны только до первой генерации: после неё HTML и скриншот заливаются
+приложением автоматически (`screenshot.jpg` перезаписывается при каждой
+генерации).
 
 Публичные адреса загруженных файлов (бакет `fastai-sites`):
 
@@ -301,9 +329,12 @@ MIME-типы, используемые в проекте:
 - `text/html` — HTML-файлы (например, `hello.html`, `sites/1/index.html`);
 - `image/jpeg` — скриншоты (`screenshot.jpg`).
 
-В коде приложения загрузка уже реализована в `upload_html()`
-(`src/s3_client.py`): она указывает `ContentType="text/html"` и
-`ContentDisposition="inline"`.
+В коде приложения загрузка уже реализована в `src/s3_client.py`:
+
+- `upload_html()` — указывает `ContentType="text/html"` и
+  `ContentDisposition="inline"`;
+- `upload_screenshot()` — указывает `ContentType="image/jpeg"` и
+  `ContentDisposition="inline"`, загружает JPEG по ключу `screenshot.jpg`.
 
 Публичные адреса после загрузки:
 

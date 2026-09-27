@@ -1,5 +1,9 @@
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+SCREENSHOT_FORMAT = Literal["png", "jpeg", "webp"]
 
 
 class DeepSeekSettings(BaseModel):
@@ -31,6 +35,16 @@ class S3Settings(BaseModel):
     max_pool_connections: int | None = Field(default=None, gt=0)
 
 
+class GotenbergSettings(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    endpoint_url: str
+    max_connections: int | None = Field(default=None, gt=0)
+    timeout: int = Field(default=15, gt=0)
+    width: int = Field(default=1280, gt=0)
+    wait_delay: int = Field(default=2, gt=0)
+    default_screenshot_format: SCREENSHOT_FORMAT = "jpeg"
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -39,8 +53,10 @@ class Settings(BaseSettings):
     )
     deepseek: DeepSeekSettings
     unsplash: UnsplashSettings
-    debug: bool = False
     s3: S3Settings
+    gotenberg: GotenbergSettings
+
+    debug: bool = False
 
 
 settings = Settings()  # type: ignore[reportCallIssue]
