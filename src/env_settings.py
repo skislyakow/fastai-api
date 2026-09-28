@@ -38,10 +38,10 @@ class S3Settings(BaseModel):
 class GotenbergSettings(BaseModel):
     model_config = ConfigDict(extra="forbid")
     endpoint_url: str
-    max_connections: int | None = Field(default=None, gt=0)
-    timeout: int = Field(default=15, gt=0)
+    max_connections: int = Field(default=5, gt=0)
+    timeout: int = Field(default=10, gt=0)
     width: int = Field(default=1280, gt=0)
-    wait_delay: int = Field(default=2, gt=0)
+    wait_delay: int = Field(default=8, gt=0)
     default_screenshot_format: SCREENSHOT_FORMAT = "jpeg"
 
 

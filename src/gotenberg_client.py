@@ -13,6 +13,7 @@ async def render_screenshot(html_code: str) -> bytes | None:
         async with httpx.AsyncClient(
             base_url=gotenberg.endpoint_url,
             timeout=timeout,
+            limits=httpx.Limits(max_connections=gotenberg.max_connections),
         ) as client:
             request = ScreenshotHTMLRequest(
                 index_html=html_code,
