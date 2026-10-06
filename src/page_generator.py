@@ -1,5 +1,4 @@
 import asyncio
-import json
 import sys
 import uuid
 from collections.abc import AsyncGenerator
@@ -9,7 +8,6 @@ from typing import Any
 
 import anyio
 import anyio.to_thread
-import httpx
 from html_page_generator import (
     AsyncDeepseekClient,
     AsyncPageGenerator,
@@ -53,20 +51,23 @@ async def ainvoke_with_retry(
     message: dict[str, str],
     *,
     temperature: float,
-    config: Any,
+    config: dict[str, Any],
 ) -> dict[str, Any]:
+    last_exc: Exception | None = None
     for attempt in range(1, MAX_ATTEMPTS + 1):
+        config["configurable"]["thread_id"] = uuid.uuid4().hex
         try:
             return await agent.ainvoke(
                 input={"messages": [message], "temperature": temperature},
                 config=config,
             )
-        except (json.decoder.JSONDecodeError, httpx.HTTPError) as exc:
+        except Exception as exc:  # noqa: BLE001
+            last_exc = exc
             print(
                 f"[Попытка {attempt}/{MAX_ATTEMPTS}: {exc}]",
                 file=sys.stderr,
             )
-    raise RuntimeError(f"Генерация не удалась после {MAX_ATTEMPTS} попыток.")
+    raise RuntimeError(f"Генерация не удалась после {MAX_ATTEMPTS} попыток.") from last_exc
 
 
 def build_deepseek_client_kwargs() -> dict[str, str]:
