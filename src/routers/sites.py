@@ -131,7 +131,8 @@ def mock_site(site_id: int = 1) -> SiteResponse:
     summary="Получить список сгенерированных сайтов текущего пользователя",
 )
 def get_user_sites() -> GeneratedSitesResponse:
-    return GeneratedSitesResponse(sites=[mock_site()])
+    sites = sorted(_SITES.values(), key=lambda s: s.id)
+    return GeneratedSitesResponse(sites=sites)
 
 
 @router.post(
