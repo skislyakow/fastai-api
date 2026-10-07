@@ -364,21 +364,32 @@ S3__MAX_POOL_CONNECTIONS=10
 в бакет через `upload_screenshot()` (`src/s3_client.py`) по постоянному ключу
 `SCREENSHOT_KEY = "screenshot.jpg"`.
 
-Заполните в `.env` группу `Gotenberg` (все поля необязательны, значения по
-умолчанию смотрите в `src/env_settings.py`):
+Заполните в `.env` группу `Gotenberg`:
 
 ```shell
 GOTENBERG__ENDPOINT_URL=https://demo.gotenberg.dev
-GOTENBERG__TIMEOUT=15   # на 2-5 сек больше WAIT_DELAY
+GOTENBERG__MAX_CONNECTIONS=5
+GOTENBERG__TIMEOUT=10   # на 2-5 сек больше WAIT_DELAY
 GOTENBERG__WIDTH=1280
-GOTENBERG__WAIT_DELAY=2
+GOTENBERG__WAIT_DELAY=8
 GOTENBERG__DEFAULT_SCREENSHOT_FORMAT=jpeg   # png | jpeg | webp
 ```
 
-По умолчанию используется публичный демо-API `https://demo.gotenberg.dev`
-(проверка доступности — `GET /health`). Если Gotenberg недоступен,
-`render_screenshot()` возвращает `None`: генерация сайта продолжается, а на
-месте скриншота сохраняется прежнее изображение.
+Обязательна только `GOTENBERG__ENDPOINT_URL` — без неё приложение не
+запустится (`ValidationError: gotenberg.endpoint_url Field required`).
+Остальные настройки необязательны и имеют значения по умолчанию:
+
+| Переменная | Обязательная | По умолчанию | Описание и выбор значения |
+|---|---|---|---|
+| `GOTENBERG__ENDPOINT_URL` | да | — | URL API Gotenberg. Стандартный публичный API — `https://demo.gotenberg.dev` (проверка доступности — `GET /health`); для локального сервера укажите свой адрес. |
+| `GOTENBERG__MAX_CONNECTIONS` | нет | `5` | Лимит одновременных подключений. |
+| `GOTENBERG__TIMEOUT` | нет | `10` | Таймаут клиента, сек. Берите на 2–5 сек больше `WAIT_DELAY`, иначе скриншот не успеет сняться. |
+| `GOTENBERG__WIDTH` | нет | `1280` | Ширина скриншота, пикс. |
+| `GOTENBERG__WAIT_DELAY` | нет | `8` | Пауза для загрузки анимаций страницы, сек. Для тяжёлых страниц увеличьте. |
+| `GOTENBERG__DEFAULT_SCREENSHOT_FORMAT` | нет | `jpeg` | Формат скриншота: `png`, `jpeg`, `webp`. |
+
+Если Gotenberg недоступен, `render_screenshot()` возвращает `None`: генерация
+сайта продолжается, а на месте скриншота сохраняется прежнее изображение.
 
 #### Ручная загрузка первых файлов
 

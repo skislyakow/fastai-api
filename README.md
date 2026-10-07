@@ -78,9 +78,9 @@ $ git check-ignore -v .env
 | `UNSPLASH__PROXY` | нет | `None` | HTTP-прокси для запросов к Unsplash |
 | `GOTENBERG__ENDPOINT_URL` | да | — | URL API Gotenberg для скриншотов |
 | `GOTENBERG__MAX_CONNECTIONS` | нет | `5` | Лимит одновременных подключений |
-| `GOTENBERG__TIMEOUT` | нет | `15` | Таймаут клиента Gotenberg, сек (на 2–5 сек больше `WAIT_DELAY`) |
+| `GOTENBERG__TIMEOUT` | нет | `10` | Таймаут клиента Gotenberg, сек (на 2–5 сек больше `WAIT_DELAY`) |
 | `GOTENBERG__WIDTH` | нет | `1280` | Ширина скриншота, пикс |
-| `GOTENBERG__WAIT_DELAY` | нет | `2` | Пауза на загрузку анимаций страницы, сек |
+| `GOTENBERG__WAIT_DELAY` | нет | `8` | Пауза на загрузку анимаций страницы, сек |
 | `GOTENBERG__DEFAULT_SCREENSHOT_FORMAT` | нет | `jpeg` | Формат скриншота: `png`, `jpeg`, `webp` |
 | `DEBUG` | нет | `false` | Режим отладки |
 
