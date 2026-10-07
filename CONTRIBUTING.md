@@ -637,6 +637,48 @@ $ uv remove beautifulsoup4
 $ uv lock
 ```
 
+#### Библиотека из Git-репозитория (не в PyPI)
+
+Если библиотека отсутствует в PyPI, но есть публичный git-репозиторий
+(например, собственная библиотека команды для генерации HTML-разметки),
+укажите его как источник при добавлении:
+
+```shell
+$ uv add "html-page-generator @ git+https://github.com/devmanorg/html-page-generator.git"
+```
+
+После добавления:
+
+- в `pyproject.toml` имя библиотеки появляется в списке `dependencies`, а в
+  секции `[tool.uv.sources]` — ссылка на git-репозиторий:
+
+  ```toml
+  [tool.uv.sources]
+  html-page-generator = { git = "https://github.com/devmanorg/html-page-generator.git" }
+  ```
+
+- в `uv.lock` пакет зафиксирован с версией и источником — git-URL с ревизией
+  (commit), например:
+  ```toml
+  source = { git = "https://github.com/devmanorg/html-page-generator.git#74c84d935e3b3f318d4aa73e062452cd6811f767" }
+  ```
+
+В проекте так подключены `html-page-generator` и `gotenberg-api`.
+
+Проверить установку из репозитория:
+
+```shell
+$ uv pip list | grep html-page-generator
+html-page-generator 0.1.0
+```
+
+В сообщении об установке видно название, номер версии и источник:
+
+```shell
+$ uv sync --reinstall-package html-page-generator
+~ html-page-generator==0.1.0 (from git+https://github.com/devmanorg/html-page-generator.git@74c84d9...)
+```
+
 ### Проверка кода линтерами
 
 Перед коммитом проверьте код линтерами:
