@@ -76,12 +76,6 @@ $ git check-ignore -v .env
 | `UNSPLASH__MAX_CONNECTIONS` | нет | `None` | Максимальное количество соединений |
 | `UNSPLASH__TIMEOUT` | нет | `None` | Таймаут соединения, секунды |
 | `UNSPLASH__PROXY` | нет | `None` | HTTP-прокси для запросов к Unsplash |
-| `GOTENBERG__ENDPOINT_URL` | да | — | URL API Gotenberg для скриншотов |
-| `GOTENBERG__MAX_CONNECTIONS` | нет | `5` | Лимит одновременных подключений |
-| `GOTENBERG__TIMEOUT` | нет | `10` | Таймаут клиента Gotenberg, сек (на 2–5 сек больше `WAIT_DELAY`) |
-| `GOTENBERG__WIDTH` | нет | `1280` | Ширина скриншота, пикс |
-| `GOTENBERG__WAIT_DELAY` | нет | `8` | Пауза на загрузку анимаций страницы, сек |
-| `GOTENBERG__DEFAULT_SCREENSHOT_FORMAT` | нет | `jpeg` | Формат скриншота: `png`, `jpeg`, `webp` |
 | `DEBUG` | нет | `false` | Режим отладки |
 
 ### Откуда взять значения
@@ -93,10 +87,9 @@ $ git check-ignore -v .env
   `DEEPSEEK__MODEL` (например, `deepseek/deepseek-chat`).
 - **Unsplash Access Key**: [https://unsplash.com/developers](https://unsplash.com/developers) —
   зарегистрируйте приложение и скопируйте его `Access Key`.
-- **Gotenberg**: используется публичный демо-API
-  `https://demo.gotenberg.dev` (проверка доступности —
-  `GET /health`). Для локального сервера укажите свой URL в
-  `GOTENBERG__ENDPOINT_URL`.
+- **Gotenberg**: стандартный публичный API — `https://demo.gotenberg.dev`
+  (проверка доступности — `GET /health`); настройка группы Gotenberg —
+  в разделе «Настройка подключения к Gotenberg (.env)».
 
 ## Генерация скриншотов (Gotenberg)
 
@@ -329,6 +322,49 @@ http://localhost:9000/fastai-sites/screenshot.jpg
 | `S3__CONNECT_TIMEOUT` | нет | — (дефолт botocore, 60 с) | Таймаут подключения, сек |
 | `S3__READ_TIMEOUT` | нет | — (дефолт botocore, 60 с) | Таймаут чтения, сек |
 | `S3__MAX_POOL_CONNECTIONS` | нет | — (дефолт botocore, 10) | Лимит одновременных подключений |
+
+### Настройка подключения к Gotenberg (.env)
+
+Приложение читает настройки Gotenberg из файла `.env`: переменные объединяются
+в группу по общему префиксу `GOTENBERG__`.
+
+1. Скопируйте шаблон:
+
+   ```shell
+   $ cp example.env .env
+   ```
+
+2. Заполните обязательную переменную группы `Gotenberg` —
+   `GOTENBERG__ENDPOINT_URL` (без неё приложение не запустится:
+   `ValidationError: gotenberg.endpoint_url Field required`). Остальные
+   настройки необязательны и имеют значения по умолчанию. Пример для
+   публичного демо-API:
+
+   ```dotenv
+   # группа Gotenberg
+   GOTENBERG__ENDPOINT_URL=https://demo.gotenberg.dev
+   GOTENBERG__MAX_CONNECTIONS=5
+   GOTENBERG__TIMEOUT=10
+   GOTENBERG__WIDTH=1280
+   GOTENBERG__WAIT_DELAY=8
+   GOTENBERG__DEFAULT_SCREENSHOT_FORMAT=jpeg
+   ```
+
+3. Запустите приложение — настройки группы появятся в JSON в консоли.
+
+#### Переменные группы `Gotenberg`
+
+| Переменная | Обязательная | По умолчанию | Описание |
+|---|---|---|---|
+| `GOTENBERG__ENDPOINT_URL` | да | — | URL API Gotenberg для скриншотов |
+| `GOTENBERG__MAX_CONNECTIONS` | нет | `5` | Лимит одновременных подключений |
+| `GOTENBERG__TIMEOUT` | нет | `10` | Таймаут клиента Gotenberg, сек (на 2–5 сек больше `WAIT_DELAY`) |
+| `GOTENBERG__WIDTH` | нет | `1280` | Ширина скриншота, пикс |
+| `GOTENBERG__WAIT_DELAY` | нет | `8` | Пауза на загрузку анимаций страницы, сек |
+| `GOTENBERG__DEFAULT_SCREENSHOT_FORMAT` | нет | `jpeg` | Формат скриншота: `png`, `jpeg`, `webp` |
+
+Если Gotenberg недоступен, `render_screenshot()` возвращает `None`: генерация
+сайта продолжается, а на месте скриншота сохраняется прежнее изображение.
 
 ### Полезные ссылки
 
