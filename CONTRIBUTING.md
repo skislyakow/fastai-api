@@ -609,11 +609,28 @@ $ make format
 $ ruff format --diff .  # посмотреть, что изменится
 ```
 
+Ruff выводит diff в формате `--- src/file.py` / `+++ src/file.py` — какие строки
+изменит. В конце — статистика, например:
+
+```shell
+1 file would be reformatted, 8 files already formatted
+```
+
 Примените изменения:
 
 ```shell
 $ ruff format .  # применить изменения
 ```
+
+Ruff отформатирует файлы и выведет список изменённых файлов:
+
+```shell
+1 file reformatted, 8 files already formatted
+```
+
+`1 file reformatted` — файл был изменён, `8 files already formatted` — остальные
+файлы уже соответствовали правилам и не требовали правок. Успешным считается
+завершение с кодом возврата `0`.
 
 Исправьте всё, что можно исправить автоматически:
 
