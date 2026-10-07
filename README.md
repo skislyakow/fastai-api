@@ -255,13 +255,21 @@ http://localhost:9000/<bucket>/<key>?response-content-disposition=attachment;%20
 
 Фронтенд показывает превью сгенерированных сайтов и скриншоты по ссылкам из
 API (`htmlCodeUrl`, `screenshotUrl`). При запуске приложения файлов в бакете ещё
-нет, поэтому до первой генерации в `fastai-sites` вручную кладут, например,
-такие файлы:
+нет, поэтому их кладут вручную. По задаче в первую очередь в корень бакета
+`fastai-sites` кладут демо-файлы:
 
-- `sites/1/index.html` — HTML демо-сайта;
-- `screenshot.jpg` — скриншот-превью.
+- `index.html` — HTML демо-сайта;
+- `index.png` — демо-скриншот.
 
 Публичные адреса:
+
+```
+http://localhost:9000/fastai-sites/index.html
+http://localhost:9000/fastai-sites/index.png
+```
+
+Ссылки, которые отдаёт API, ведут на ключи `sites/1/index.html` и
+`screenshot.jpg`, поэтому до первой генерации их тоже кладут вручную:
 
 ```
 http://localhost:9000/fastai-sites/sites/1/index.html

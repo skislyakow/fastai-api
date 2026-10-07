@@ -392,25 +392,36 @@ GOTENBERG__DEFAULT_SCREENSHOT_FORMAT=jpeg   # png | jpeg | webp
 эндпоинтов: `GET /sites/my` и `GET /sites/{id}` возвращают `htmlCodeUrl`,
 `htmlCodeDownloadUrl`, `screenshotUrl`.
 
-Пока файлов нет в бакете, загрузите их вручную через веб-интерфейс
-`http://localhost:9001` (Object Browser):
+Пока файлов нет в бакете, положите их вручную через веб-интерфейс
+`http://localhost:9001` (Object Browser). По задаче в первую очередь в корень
+бакета загружают демо-файлы:
 
-- `sites/1/index.html` — дефолтный HTML демо-сайта, загружайте в папку `sites/1/`;
-- `screenshot.jpg` — общий скриншот для всех сайтов, загружайте в корень бакета.
+- `index.html` — HTML демо-сайта;
+- `index.png` — демо-скриншот.
 
-Оба файла нужны только до первой генерации: после неё HTML и скриншот заливаются
-приложением автоматически (`screenshot.jpg` перезаписывается при каждой
-генерации).
-
-Публичные адреса загруженных файлов (бакет `fastai-sites`):
+Публичные адреса этих файлов (бакет `fastai-sites`):
 
 ```
-http://localhost:9000/fastai-sites/sites/1/index.html   — демо-сайт
-http://localhost:9000/fastai-sites/screenshot.jpg       — скриншот
+http://localhost:9000/fastai-sites/index.html   — демо-сайт
+http://localhost:9000/fastai-sites/index.png    — скриншот
 ```
 
-Формат адреса: `{S3__ENDPOINT_URL}/{S3__BUCKET_NAME}/{key}`. Примеры адресов
-из задачи иллюстративные — используйте реальные ключи проекта.
+Формат адреса: `{S3__ENDPOINT_URL}/{S3__BUCKET_NAME}/{key}`.
+
+Ссылки, которые отдаёт код (`_s3_urls()` в `src/routers/sites.py`:
+`htmlCodeUrl`, `htmlCodeDownloadUrl`, `screenshotUrl`), ведут на ключи
+`sites/1/index.html` и `screenshot.jpg` — первый загружайте в папку `sites/1/`,
+второй в корень бакета. Без них превью вернёт `404` и фронтенд будет выглядеть
+сломанным.
+
+```
+http://localhost:9000/fastai-sites/sites/1/index.html   — HTML по ссылке из API
+http://localhost:9000/fastai-sites/screenshot.jpg       — скриншот по ссылке из API
+```
+
+Загружать нужно один раз: после первой генерации сайта HTML и скриншот
+заливаются приложением автоматически (`screenshot.jpg` перезаписывается
+при каждой генерации).
 
 #### Загрузка файлов из python-кода
 
