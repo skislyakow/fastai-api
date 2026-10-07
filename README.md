@@ -76,7 +76,8 @@ $ git check-ignore -v .env
 | `UNSPLASH__MAX_CONNECTIONS` | нет | `None` | Максимальное количество соединений |
 | `UNSPLASH__TIMEOUT` | нет | `None` | Таймаут соединения, секунды |
 | `UNSPLASH__PROXY` | нет | `None` | HTTP-прокси для запросов к Unsplash |
-| `GOTENBERG__ENDPOINT_URL` | нет | `https://demo.gotenberg.dev` | URL API Gotenberg для скриншотов |
+| `GOTENBERG__ENDPOINT_URL` | да | — | URL API Gotenberg для скриншотов |
+| `GOTENBERG__MAX_CONNECTIONS` | нет | `5` | Лимит одновременных подключений |
 | `GOTENBERG__TIMEOUT` | нет | `15` | Таймаут клиента Gotenberg, сек (на 2–5 сек больше `WAIT_DELAY`) |
 | `GOTENBERG__WIDTH` | нет | `1280` | Ширина скриншота, пикс |
 | `GOTENBERG__WAIT_DELAY` | нет | `2` | Пауза на загрузку анимаций страницы, сек |
