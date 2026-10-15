@@ -8,8 +8,6 @@ from botocore.exceptions import ClientError
 
 from env_settings import settings
 
-SCREENSHOT_KEY = "screenshot.jpg"
-
 
 def build_site_html_key(site_id: int) -> str:
     return f"sites/{site_id}/index.html"
@@ -96,12 +94,13 @@ async def upload_screenshot(
     s3: Any,
     bucket: str,
     key: str,
-    jpeg_bytes: bytes,
+    content_bytes: bytes,
+    content_type: str,
 ) -> None:
     await s3.put_object(
         Bucket=bucket,
         Key=key,
-        Body=jpeg_bytes,
-        ContentType="image/jpeg",
+        Body=content_bytes,
+        ContentType=content_type,
         ContentDisposition="inline",
     )

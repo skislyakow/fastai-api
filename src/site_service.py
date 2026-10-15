@@ -7,13 +7,17 @@ import httpx
 from pydantic import AnyHttpUrl
 
 from env_settings import settings
-from gotenberg_client import GotenbergServerError, render_screenshot
+from gotenberg_client import SCREENSHOT_FORMATS, render_screenshot
 from page_generator import SITE_HTML_PATH, stream_site_html
-from s3_client import SCREENSHOT_KEY, build_object_url, build_site_html_key, upload_html, upload_screenshot
+from s3_client import build_object_url, build_site_html_key, upload_html, upload_screenshot
 from schemas import SiteResponse
 
 SITES: dict[int, SiteResponse] = {}
 BACKGROUND_TASKS: set[asyncio.Task[None]] = set()
+
+SCREENSHOT_FORMAT = settings.gotenberg.default_screenshot_format
+SCREENSHOT_MIME, SCREENSHOT_EXT = SCREENSHOT_FORMATS[SCREENSHOT_FORMAT]
+SCREENSHOT_KEY = f"screenshot.{SCREENSHOT_EXT}"
 
 
 def s3_urls(site_id: int) -> tuple[AnyHttpUrl, AnyHttpUrl, AnyHttpUrl]:
@@ -64,16 +68,14 @@ async def relay_html(
         if SITE_HTML_PATH.exists():
             html_code = SITE_HTML_PATH.read_text(encoding="utf-8")
             await upload_html(s3, bucket, build_site_html_key(site_id), html_code)
-            try:
-                screenshot_bytes = await render_screenshot(gotenberg, html_code)
-                await upload_screenshot(
-                    s3,
-                    bucket,
-                    SCREENSHOT_KEY,
-                    screenshot_bytes,
-                )
-            except GotenbergServerError:
-                pass
+            screenshot_bytes = await render_screenshot(gotenberg, html_code)
+            await upload_screenshot(
+                s3,
+                bucket,
+                SCREENSHOT_KEY,
+                screenshot_bytes,
+                SCREENSHOT_MIME,
+            )
         if site_id in SITES:
             SITES[site_id] = SITES[site_id].model_copy(
                 update={"updated_at": datetime.now(UTC)},
