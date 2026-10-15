@@ -1,5 +1,26 @@
 # fastai-api
-AI site generator
+
+[![Python](https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Pydantic](https://img.shields.io/badge/Pydantic-2-E92063?logo=pydantic&logoColor=white)](https://docs.pydantic.dev/)
+[![uv](https://img.shields.io/badge/uv-package%20manager-DE5FA3?logo=uv&logoColor=white)](https://docs.astral.sh/uv/)
+[![Ruff](https://img.shields.io/badge/Ruff-linter-D7FF64?logo=ruff&logoColor=black)](https://docs.astral.sh/ruff/)
+[![pre-commit](https://img.shields.io/badge/pre-commit-hooks-D7FF64)](https://pre-commit.com/)
+
+[![DeepSeek](https://img.shields.io/badge/DeepSeek-LLM-4D6BFE)](https://platform.deepseek.com/)
+[![Unsplash](https://img.shields.io/badge/Unsplash-images-111111?logo=unsplash&logoColor=white)](https://unsplash.com/developers)
+[![MinIO](https://img.shields.io/badge/MinIO-S3%20storage-C72E49?logo=minio&logoColor=white)](https://min.io/)
+[![Gotenberg](https://img.shields.io/badge/Gotenberg-screenshots-2E7D32)](https://gotenberg.dev/)
+[![LangChain](https://img.shields.io/badge/LangChain-agent-1C3C3C?logo=langchain&logoColor=white)](https://www.langchain.com/)
+
+FastAI — генератор сайтов с помощью искусственного интеллекта. Вы описываете сайт
+текстовым промптом, а бэкенд формирует HTML-код, ищет изображения в Unsplash и
+сохраняет готовую страницу в S3-хранилище вместе со скриншотом. Результат доступен
+по прямым ссылкам для просмотра и скачивания.
+
+Проект построен на FastAPI и использует внешние сервисы: модель DeepSeek (через
+совместимый API-провайдер) для генерации HTML, Unsplash для поиска фото, MinIO (S3)
+для хранения файлов и Gotenberg для создания скриншотов страниц.
 
 ## Локальная установка
 
