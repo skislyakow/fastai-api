@@ -7,7 +7,7 @@ import httpx
 from pydantic import AnyHttpUrl
 
 from env_settings import settings
-from gotenberg_client import render_screenshot
+from gotenberg_client import GotenbergServerError, render_screenshot
 from page_generator import SITE_HTML_PATH, stream_site_html
 from s3_client import SCREENSHOT_KEY, object_url, site_html_key, upload_html, upload_screenshot
 from schemas import SiteResponse
@@ -64,14 +64,17 @@ async def relay_html(
         if SITE_HTML_PATH.exists():
             html_code = SITE_HTML_PATH.read_text(encoding="utf-8")
             await upload_html(s3, bucket, site_html_key(site_id), html_code)
-            screenshot_bytes = await render_screenshot(gotenberg, html_code)
-            if screenshot_bytes:
+            try:
+                screenshot_bytes = await render_screenshot(gotenberg, html_code)
                 await upload_screenshot(
                     s3,
                     bucket,
                     SCREENSHOT_KEY,
                     screenshot_bytes,
                 )
+            except GotenbergServerError:
+                # Gotenberg недоступен — продолжаем генерацию без скриншота
+                pass
         if site_id in SITES:
             SITES[site_id] = SITES[site_id].model_copy(
                 update={"updated_at": datetime.now(UTC)},
