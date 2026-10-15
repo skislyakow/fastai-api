@@ -2,7 +2,11 @@ import json
 from typing import Any
 from urllib.parse import quote, urlencode
 
+import aioboto3
+from botocore.config import Config
 from botocore.exceptions import ClientError
+
+from env_settings import settings
 
 SCREENSHOT_KEY = "screenshot.jpg"
 
@@ -48,6 +52,26 @@ def object_url(
         },
     )
     return f"{base_url}?{query}"
+
+
+def create_s3_client() -> Any:
+    config_kwargs: dict[str, Any] = {"signature_version": "s3v4"}
+    for src, dst in (
+        (settings.s3.connect_timeout, "connect_timeout"),
+        (settings.s3.read_timeout, "read_timeout"),
+        (settings.s3.max_pool_connections, "max_pool_connections"),
+    ):
+        if src is not None:
+            config_kwargs[dst] = src
+
+    return aioboto3.Session().client(
+        "s3",
+        endpoint_url=settings.s3.endpoint_url,
+        aws_access_key_id=settings.s3.access_key_id.get_secret_value(),
+        aws_secret_access_key=settings.s3.secret_access_key.get_secret_value(),
+        region_name=settings.s3.region_name,
+        config=Config(**config_kwargs),
+    )
 
 
 async def ensure_bucket(s3: Any, bucket: str) -> None:

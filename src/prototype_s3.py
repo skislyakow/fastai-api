@@ -5,12 +5,11 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import quote, urlencode
 
-import aioboto3
-from botocore.config import Config
 from botocore.exceptions import ClientError
 
 from env_settings import settings
 from logging_config import get_logger, setup_logging
+from s3_client import create_s3_client
 
 logger = get_logger(__name__)
 
@@ -106,15 +105,7 @@ async def main() -> None:
     bucket = s3_settings.bucket_name
     endpoint_url = s3_settings.endpoint_url
 
-    s3_cm: Any = aioboto3.Session().client(
-        "s3",
-        endpoint_url=endpoint_url,
-        aws_access_key_id=s3_settings.access_key_id.get_secret_value(),
-        aws_secret_access_key=s3_settings.secret_access_key.get_secret_value(),
-        region_name=s3_settings.region_name,
-        config=Config(signature_version="s3v4"),
-    )
-    async with s3_cm as s3:
+    async with create_s3_client() as s3:
         await ensure_bucket(s3, bucket)
 
         for source_name, key, content_type, content_disposition in UPLOADS:
