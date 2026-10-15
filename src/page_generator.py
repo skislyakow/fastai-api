@@ -13,11 +13,11 @@ from html_page_generator import (
     AsyncUnsplashClient,
 )
 from html_page_generator._html_page_generator import (
-    FIND_IMAGES_PROMPT,  # noqa: PLC2701
-    GENERATE_HTML_PROMPT,  # noqa: PLC2701
-    REGENERATE_HTML_PROMPT,  # noqa: PLC2701
-    HtmlPage,  # noqa: PLC2701
-    get_images_from_unsplash,  # noqa: PLC2701
+    FIND_IMAGES_PROMPT,
+    GENERATE_HTML_PROMPT,
+    REGENERATE_HTML_PROMPT,
+    HtmlPage,
+    get_images_from_unsplash,
 )
 from langchain_core.messages import ToolMessage
 from langchain_deepseek import ChatDeepSeek
@@ -164,6 +164,20 @@ async def save_generated_site(generator: StreamPageGenerator) -> None:
             )
 
 
+async def _stream_html(
+    generator: StreamPageGenerator,
+    prompt: str,
+) -> AsyncGenerator[str]:
+    async for chunk in generator.generate_html(prompt):
+        _echo(chunk)
+        yield chunk
+    await generator.check_html()
+    if not generator.html_page.is_valid:
+        async for chunk in generator.regenerate_html():
+            _echo(chunk)
+            yield chunk
+
+
 async def stream_site_html(prompt: str) -> AsyncGenerator[str]:
     async with (
         AsyncUnsplashClient.setup(
@@ -179,14 +193,8 @@ async def stream_site_html(prompt: str) -> AsyncGenerator[str]:
     ):
         generator = StreamPageGenerator(debug_mode=settings.debug)
         try:
-            async for chunk in generator.generate_html(prompt):
-                _echo(chunk)
+            async for chunk in _stream_html(generator, prompt):
                 yield chunk
-            await generator.check_html()
-            if not generator.html_page.is_valid:
-                async for chunk in generator.regenerate_html():
-                    _echo(chunk)
-                    yield chunk
         except Exception as exc:
             logger.error("ОШИБКА ГЕНЕРАЦИИ: %s", exc)
             if not generator.html_page.html_code:
