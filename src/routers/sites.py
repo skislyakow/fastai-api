@@ -15,8 +15,8 @@ from site_service import (
     SITE_HTML_PATH,
     SITES,
     build_site,
+    get_next_id,
     mock_site,
-    next_id,
     relay_html,
     run_in_background,
     stream_queue,
@@ -47,7 +47,7 @@ def get_user_sites() -> GeneratedSitesResponse:
 def create_site(
     create_request: CreateSiteRequest,
 ) -> SiteResponse:
-    site_id = next_id()
+    site_id = get_next_id()
     title = create_request.title or create_request.prompt[:128]
     SITES[site_id] = build_site(
         site_id,
@@ -115,7 +115,7 @@ def view_site_html(site_id: int, download: bool = False) -> FileResponse:
     "/{site_id}/screenshot",
     summary="Скриншот сайта",
 )
-def site_screenshot(request: Request, site_id: int) -> FileResponse:
+def get_site_screenshot(request: Request, site_id: int) -> FileResponse:
     return FileResponse(SCREENSHOT_PATH, media_type="image/jpeg")
 
 

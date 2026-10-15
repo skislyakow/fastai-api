@@ -11,11 +11,11 @@ from env_settings import settings
 SCREENSHOT_KEY = "screenshot.jpg"
 
 
-def site_html_key(site_id: int) -> str:
+def build_site_html_key(site_id: int) -> str:
     return f"sites/{site_id}/index.html"
 
 
-def public_policy(bucket: str) -> str:
+def build_public_policy(bucket: str) -> str:
     policy = {
         "Version": "2012-10-17",
         "Statement": [
@@ -36,7 +36,7 @@ def public_policy(bucket: str) -> str:
     return json.dumps(policy)
 
 
-def object_url(
+def build_object_url(
     endpoint_url: str,
     bucket: str,
     key: str,
@@ -79,7 +79,7 @@ async def ensure_bucket(s3: Any, bucket: str) -> None:
         await s3.head_bucket(Bucket=bucket)
     except ClientError:
         await s3.create_bucket(Bucket=bucket)
-    await s3.put_bucket_policy(Bucket=bucket, Policy=public_policy(bucket))
+    await s3.put_bucket_policy(Bucket=bucket, Policy=build_public_policy(bucket))
 
 
 async def upload_html(s3: Any, bucket: str, key: str, html_code: str) -> None:

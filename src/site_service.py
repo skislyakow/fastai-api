@@ -9,7 +9,7 @@ from pydantic import AnyHttpUrl
 from env_settings import settings
 from gotenberg_client import GotenbergServerError, render_screenshot
 from page_generator import SITE_HTML_PATH, stream_site_html
-from s3_client import SCREENSHOT_KEY, object_url, site_html_key, upload_html, upload_screenshot
+from s3_client import SCREENSHOT_KEY, build_object_url, build_site_html_key, upload_html, upload_screenshot
 from schemas import SiteResponse
 
 SITES: dict[int, SiteResponse] = {}
@@ -19,19 +19,19 @@ BACKGROUND_TASKS: set[asyncio.Task[None]] = set()
 def s3_urls(site_id: int) -> tuple[AnyHttpUrl, AnyHttpUrl, AnyHttpUrl]:
     s3 = settings.s3
     endpoint_url = str(s3.endpoint_url)
-    html_key = site_html_key(site_id)
-    html_url = object_url(endpoint_url, s3.bucket_name, html_key)
-    download_url = object_url(
+    html_key = build_site_html_key(site_id)
+    html_url = build_object_url(endpoint_url, s3.bucket_name, html_key)
+    download_url = build_object_url(
         endpoint_url,
         s3.bucket_name,
         html_key,
         attachment_filename="index.html",
     )
-    screenshot_url = object_url(endpoint_url, s3.bucket_name, SCREENSHOT_KEY)
+    screenshot_url = build_object_url(endpoint_url, s3.bucket_name, SCREENSHOT_KEY)
     return AnyHttpUrl(html_url), AnyHttpUrl(download_url), AnyHttpUrl(screenshot_url)
 
 
-def next_id() -> int:
+def get_next_id() -> int:
     return max(SITES, default=0) + 1
 
 
@@ -63,7 +63,7 @@ async def relay_html(
             await queue.put(chunk)
         if SITE_HTML_PATH.exists():
             html_code = SITE_HTML_PATH.read_text(encoding="utf-8")
-            await upload_html(s3, bucket, site_html_key(site_id), html_code)
+            await upload_html(s3, bucket, build_site_html_key(site_id), html_code)
             try:
                 screenshot_bytes = await render_screenshot(gotenberg, html_code)
                 await upload_screenshot(
