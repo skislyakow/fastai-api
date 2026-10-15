@@ -18,3 +18,9 @@ repos:
         entry: ruff check ./src
         language: system
         pass_filenames: no
+
+      - id: linters-ruff-format
+        name: ruff format
+        entry: ruff format --check ./src
+        language: system
+        pass_filenames: no

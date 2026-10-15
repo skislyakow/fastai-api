@@ -19,6 +19,7 @@ from html_page_generator._html_page_generator import (
     get_images_from_unsplash,
 )
 from langchain_core.messages import ToolMessage
+from langchain_core.runnables import RunnableConfig
 from langchain_deepseek import ChatDeepSeek
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.prebuilt import ToolNode, create_react_agent
@@ -52,11 +53,11 @@ async def ainvoke_with_retry(
     message: dict[str, str],
     *,
     temperature: float,
-    config: dict[str, Any],
+    config: RunnableConfig,
 ) -> dict[str, Any]:
     last_exc: Exception | None = None
     for attempt in range(1, MAX_ATTEMPTS + 1):
-        config["configurable"]["thread_id"] = uuid.uuid4().hex
+        config.setdefault("configurable", {})["thread_id"] = uuid.uuid4().hex
         try:
             return await agent.ainvoke(
                 input={"messages": [message], "temperature": temperature},

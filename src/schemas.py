@@ -1,27 +1,42 @@
 from datetime import datetime
 from typing import Annotated
 
-from pydantic import AnyHttpUrl, BaseModel, EmailStr, Field, StringConstraints
+from pydantic import (
+    AnyHttpUrl,
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    Field,
+    StringConstraints,
+)
 
 
-class UserDetailsResponse(BaseModel):
+class CamelCaseModel(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class UserDetailsResponse(CamelCaseModel):
     email: EmailStr = Field(
         description="Email пользователя",
         examples=["example@example.com"],
     )
-    isActive: bool = Field(
+    is_active: bool = Field(
+        serialization_alias="isActive",
         description="Активен ли аккаунт",
         examples=[True],
     )
-    profileId: int = Field(
+    profile_id: int = Field(
+        serialization_alias="profileId",
         description="Идентификатор профиля",
         examples=[1],
     )
-    registeredAt: datetime = Field(
+    registered_at: datetime = Field(
+        serialization_alias="registeredAt",
         description="Дата регистрации",
         examples=["2025-06-15T18:29:56+00:00"],
     )
-    updatedAt: datetime = Field(
+    updated_at: datetime = Field(
+        serialization_alias="updatedAt",
         description="Дата последнего обновления пользователя",
         examples=["2025-06-15T18:29:56+00:00"],
     )
@@ -34,7 +49,7 @@ class UserDetailsResponse(BaseModel):
 SiteTitle = Annotated[str, StringConstraints(max_length=128)]
 
 
-class CreateSiteRequest(BaseModel):
+class CreateSiteRequest(CamelCaseModel):
     prompt: str = Field(
         description="Описание сайта для генерации",
         examples=["Стегозавры"],
@@ -46,14 +61,14 @@ class CreateSiteRequest(BaseModel):
     )
 
 
-class SiteGenerationRequest(BaseModel):
+class SiteGenerationRequest(CamelCaseModel):
     prompt: str = Field(
         description="Описание сайта для генерации",
         examples=["Стегозавры"],
     )
 
 
-class SiteResponse(BaseModel):
+class SiteResponse(CamelCaseModel):
     id: int = Field(
         description="Идентификатор сайта",
         examples=[1],
@@ -62,15 +77,18 @@ class SiteResponse(BaseModel):
         description="Название сайта",
         examples=["Стегозавры"],
     )
-    htmlCodeUrl: AnyHttpUrl | None = Field(
+    html_code_url: AnyHttpUrl | None = Field(
+        serialization_alias="htmlCodeUrl",
         description="Ссылка на html-код сайта",
         examples=["https://google.com"],
     )
-    htmlCodeDownloadUrl: AnyHttpUrl | None = Field(
+    html_code_download_url: AnyHttpUrl | None = Field(
+        serialization_alias="htmlCodeDownloadUrl",
         description="Ссылка на скачивание HTML-кода сайта",
         examples=["https://google.com"],
     )
-    screenshotUrl: AnyHttpUrl | None = Field(
+    screenshot_url: AnyHttpUrl | None = Field(
+        serialization_alias="screenshotUrl",
         description="Ссылка на скриншот сайта",
         examples=["https://google.com"],
     )
@@ -78,17 +96,19 @@ class SiteResponse(BaseModel):
         description="Описание сайта для генерации",
         examples=["Стегозавры"],
     )
-    createdAt: datetime = Field(
+    created_at: datetime = Field(
+        serialization_alias="createdAt",
         description="Дата создания сайта",
         examples=["2025-06-15T18:29:56+00:00"],
     )
-    updatedAt: datetime = Field(
+    updated_at: datetime = Field(
+        serialization_alias="updatedAt",
         description="Дата последнего обновления сайта",
         examples=["2025-06-15T18:29:56+00:00"],
     )
 
 
-class GeneratedSitesResponse(BaseModel):
+class GeneratedSitesResponse(CamelCaseModel):
     sites: list[SiteResponse] = Field(
         description="Список сгенерированных сайтов",
     )

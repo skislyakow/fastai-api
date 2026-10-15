@@ -12,8 +12,8 @@ exclude = [
 
 line-length = 120
 
-# Assume Python 3.9
-target-version = "py39"
+# Проект требует Python 3.13 (см. requires-python в pyproject.toml).
+target-version = "py313"
 
 [lint.mccabe]
 max-complexity = 7
@@ -45,6 +45,7 @@ select = [
     "E", # Ошибки из pycodestyle (PEP 8)
     "F", # Логические ошибки и потенциальные баги (неиспользуемый импорт, обращение к необъявленной переменной, и т.д.)
     "I", # isort (сортировка импортов)
+    "N", # pep8-naming (соглашения об именах: snake_case для полей и функций, CamelCase для классов)
     "W", # Предупреждения из pycodestyle (пробелы в конце строки, пустые строки, и т.д.)
     "UP", # pyupgrade -- модернизация кода (замена type(x) == int на isinstance(x, int), и т.д.)
     "PL", # Pylint правила (сложность функции, глобальные переменные)
@@ -74,6 +75,7 @@ ignore = [
     "PLR6301", # Method could be a function, class method, or static method
     "PLC0415", # `import` should be at the top-level of a file
     "B008", # Do not perform function call in argument defaults
+    "COM812", # конфликтует с форматтером `ruff format` (он сам управляет trailing comma)
 ]
 
 # Allow unused variables when underscore-prefixed.

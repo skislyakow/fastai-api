@@ -1,12 +1,13 @@
 import asyncio
 from collections.abc import AsyncGenerator
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import httpx
 from fastapi import APIRouter, Request
 from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
+from pydantic import AnyHttpUrl
 
 from env_settings import settings
 from gotenberg_client import render_screenshot
@@ -30,7 +31,7 @@ _BACKGROUND_TASKS: set[asyncio.Task[None]] = set()
 router = APIRouter(prefix="/sites", tags=["Sites"])
 
 
-def _s3_urls(site_id: int) -> tuple[str, str, str]:
+def _s3_urls(site_id: int) -> tuple[AnyHttpUrl, AnyHttpUrl, AnyHttpUrl]:
     s3 = settings.s3
     endpoint_url = str(s3.endpoint_url)
     html_key = site_html_key(site_id)
@@ -42,7 +43,7 @@ def _s3_urls(site_id: int) -> tuple[str, str, str]:
         attachment_filename="index.html",
     )
     screenshot_url = object_url(endpoint_url, s3.bucket_name, SCREENSHOT_KEY)
-    return html_url, download_url, screenshot_url
+    return AnyHttpUrl(html_url), AnyHttpUrl(download_url), AnyHttpUrl(screenshot_url)
 
 
 def _next_id() -> int:
@@ -88,7 +89,7 @@ async def _relay_html(
                 )
         if site_id in _SITES:
             _SITES[site_id] = _SITES[site_id].model_copy(
-                update={"updatedAt": datetime.now(timezone.utc)},
+                update={"updated_at": datetime.now(UTC)},
             )
     finally:
         await queue.put(None)
@@ -109,16 +110,16 @@ def build_site(
     prompt: str,
 ) -> SiteResponse:
     html_url, download_url, screenshot_url = _s3_urls(site_id)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     return SiteResponse(
         id=site_id,
         title=title,
-        htmlCodeUrl=html_url,
-        htmlCodeDownloadUrl=download_url,
-        screenshotUrl=screenshot_url,
+        html_code_url=html_url,
+        html_code_download_url=download_url,
+        screenshot_url=screenshot_url,
         prompt=prompt,
-        createdAt=now,
-        updatedAt=now,
+        created_at=now,
+        updated_at=now,
     )
 
 
@@ -127,12 +128,12 @@ def mock_site(site_id: int = 1) -> SiteResponse:
     return SiteResponse(
         id=site_id,
         title="Стегозавры",
-        htmlCodeUrl=html_url,
-        htmlCodeDownloadUrl=download_url,
-        screenshotUrl=screenshot_url,
+        html_code_url=html_url,
+        html_code_download_url=download_url,
+        screenshot_url=screenshot_url,
         prompt="Сделай сайт про Стегозавров",
-        createdAt=datetime(2025, 6, 15, 18, 29, 56, tzinfo=timezone.utc),
-        updatedAt=datetime(2025, 6, 15, 18, 29, 56, tzinfo=timezone.utc),
+        created_at=datetime(2025, 6, 15, 18, 29, 56, tzinfo=UTC),
+        updated_at=datetime(2025, 6, 15, 18, 29, 56, tzinfo=UTC),
     )
 
 

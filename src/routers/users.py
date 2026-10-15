@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter
 
@@ -15,9 +15,9 @@ router = APIRouter(prefix="/users", tags=["Users"])
 def get_current_user() -> UserDetailsResponse:
     return UserDetailsResponse(
         email="example@example.com",
-        isActive=True,
-        profileId=1,
-        registeredAt=datetime(2025, 6, 15, 18, 29, 56, tzinfo=timezone.utc),
-        updatedAt=datetime(2025, 6, 15, 18, 29, 56, tzinfo=timezone.utc),
+        is_active=True,
+        profile_id=1,
+        registered_at=datetime(2025, 6, 15, 18, 29, 56, tzinfo=UTC),
+        updated_at=datetime(2025, 6, 15, 18, 29, 56, tzinfo=UTC),
         username="user123",
     )

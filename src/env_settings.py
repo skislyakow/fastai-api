@@ -25,7 +25,7 @@ class UnsplashSettings(BaseModel):
 
 class S3Settings(BaseModel):
     model_config = ConfigDict(extra="forbid", validate_default=True)
-    endpoint_url: AnyHttpUrl = "http://localhost:9000"
+    endpoint_url: AnyHttpUrl = AnyHttpUrl("http://localhost:9000")
     access_key_id: SecretStr
     secret_access_key: SecretStr
     bucket_name: str = "fastai-sites"
