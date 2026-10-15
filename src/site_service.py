@@ -73,7 +73,6 @@ async def relay_html(
                     screenshot_bytes,
                 )
             except GotenbergServerError:
-                # Gotenberg недоступен — продолжаем генерацию без скриншота
                 pass
         if site_id in SITES:
             SITES[site_id] = SITES[site_id].model_copy(
