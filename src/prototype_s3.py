@@ -10,6 +10,9 @@ from botocore.config import Config
 from botocore.exceptions import ClientError
 
 from env_settings import settings
+from logging_config import get_logger, setup_logging
+
+logger = get_logger(__name__)
 
 STUB_DIR = Path(__file__).resolve().parent.parent / "stub"
 UPLOADS = [
@@ -57,7 +60,7 @@ async def ensure_bucket(s3: Any, bucket: str) -> None:
     except ClientError:
         await s3.create_bucket(Bucket=bucket)
     await s3.put_bucket_policy(Bucket=bucket, Policy=public_policy(bucket))
-    print(f"[bucket] {bucket} - публичная политика применена")
+    logger.info("bucket %s - публичная политика применена", bucket)
 
 
 async def upload(
@@ -76,17 +79,25 @@ async def upload(
         ContentType=content_type,
         ContentDisposition=content_disposition,
     )
-    print(
-        f"[upload] {source.name} -> {key} ({content_type}, {content_disposition}, {len(body)} B)",
+    logger.info(
+        "upload %s -> %s (%s, %s, %s B)",
+        source.name,
+        key,
+        content_type,
+        content_disposition,
+        len(body),
     )
 
 
 async def print_head(s3: Any, bucket: str, key: str) -> None:
     info = await s3.head_object(Bucket=bucket, Key=key)
     disposition = info.get("ContentDisposition") or "-"
-    print(
-        f"[head] {key}: ContentType={info['ContentType']}, "
-        f"ContentDisposition={disposition}, ContentLength={info['ContentLength']}",
+    logger.info(
+        "head %s: ContentType=%s, ContentDisposition=%s, ContentLength=%s",
+        key,
+        info["ContentType"],
+        disposition,
+        info["ContentLength"],
     )
 
 
@@ -118,14 +129,16 @@ async def main() -> None:
 
         await print_head(s3, bucket, "hello.html")
 
-        print(f"\n[url] {object_url(endpoint_url, bucket, 'hello.html')}")
-        print(
-            "[url] " + object_url(endpoint_url, bucket, "hello.html", attachment_filename="hello.html"),
+        logger.info("url: %s", object_url(endpoint_url, bucket, "hello.html"))
+        logger.info(
+            "url: %s",
+            object_url(endpoint_url, bucket, "hello.html", attachment_filename="hello.html"),
         )
-        print(f"[url] {object_url(endpoint_url, bucket, 'screenshot.jpg')}")
+        logger.info("url: %s", object_url(endpoint_url, bucket, "screenshot.jpg"))
 
 
 def main_entry() -> None:
+    setup_logging()
     parser = argparse.ArgumentParser(
         description="S3-прототип: ensure_bucket, upload, head, URL (MinIO)",
     )

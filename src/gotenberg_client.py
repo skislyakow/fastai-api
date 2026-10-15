@@ -1,9 +1,10 @@
-import sys
-
 import httpx
 from gotenberg_api import GotenbergServerError, ScreenshotHTMLRequest
 
 from env_settings import settings
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 async def render_screenshot(html_code: str) -> bytes | None:
@@ -23,5 +24,5 @@ async def render_screenshot(html_code: str) -> bytes | None:
             )
             return await request.asend(client)
     except GotenbergServerError as exc:
-        print(f"[ОШИБКА СКРИНШОТА] {exc}", file=sys.stderr)
+        logger.error("ОШИБКА СКРИНШОТА: %s", exc)
         return None

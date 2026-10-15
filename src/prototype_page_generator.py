@@ -8,12 +8,15 @@ import httpx
 from html_page_generator import AsyncDeepseekClient, AsyncUnsplashClient
 
 from env_settings import settings
+from logging_config import get_logger, setup_logging
 from page_generator import (
     DEFAULT_PROMPT,
     StreamPageGenerator,
     build_deepseek_client_kwargs,
     build_unsplash_client_kwargs,
 )
+
+logger = get_logger(__name__)
 
 MAX_ATTEMPTS = 3
 TMP_DIR = Path(__file__).resolve().parent.parent / "tmp"
@@ -41,15 +44,16 @@ async def generate_page(prompt: str) -> None:
     ):
         generator = StreamPageGenerator(debug_mode=settings.debug)
         async for chunk in generator(prompt):
-            print(chunk, end="", flush=True)
+            logger.debug("%s", chunk)
 
     TMP_DIR.mkdir(parents=True, exist_ok=True)
     output_path = TMP_DIR / f"{sanitize_filename(generator.html_page.title)}.html"
     output_path.write_text(generator.html_page.html_code, encoding="utf-8")
-    print(f"\n[OK] Файл сохранён: {output_path}")
+    logger.info("Файл сохранён: %s", output_path)
 
 
 def main() -> None:
+    setup_logging(debug=settings.debug)
     parser = argparse.ArgumentParser(description="Сгенерировать HTML-страницу по промпту")
     parser.add_argument("prompt", nargs="?", default=DEFAULT_PROMPT)
     args = parser.parse_args()
@@ -58,9 +62,9 @@ def main() -> None:
             asyncio.run(generate_page(args.prompt))
             return
         except (json.decoder.JSONDecodeError, httpx.HTTPError) as exc:
-            print(f"\n[Попытка {attempt}/{MAX_ATTEMPTS}: {exc}]", file=sys.stderr)
+            logger.warning("Попытка %s/%s: %s", attempt, MAX_ATTEMPTS, exc)
 
-    print("\n[ОШИБКА] Генерация не удалась после нескольких попыток.", file=sys.stderr)
+    logger.error("Генерация не удалась после нескольких попыток.")
     sys.exit(1)
 
 

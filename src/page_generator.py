@@ -1,5 +1,4 @@
 import asyncio
-import sys
 import uuid
 from collections.abc import AsyncGenerator
 from datetime import datetime
@@ -26,6 +25,9 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.prebuilt import ToolNode, create_react_agent
 
 from env_settings import settings
+from logging_config import get_logger
+
+logger = get_logger(__name__)
 
 SITE_HTML_PATH = Path(__file__).resolve().parent.parent / "index.html"
 DEFAULT_PROMPT = (
@@ -43,7 +45,7 @@ MAX_ATTEMPTS = 3
 
 def _echo(chunk: str) -> None:
     if settings.debug:
-        print(chunk, end="", flush=True)
+        logger.debug("%s", chunk)
 
 
 async def ainvoke_with_retry(
@@ -63,10 +65,7 @@ async def ainvoke_with_retry(
             )
         except Exception as exc:  # noqa: BLE001
             last_exc = exc
-            print(
-                f"[Попытка {attempt}/{MAX_ATTEMPTS}: {exc}]",
-                file=sys.stderr,
-            )
+            logger.warning("Попытка %s/%s: %s", attempt, MAX_ATTEMPTS, exc)
     raise RuntimeError(f"Генерация не удалась после {MAX_ATTEMPTS} попыток.") from last_exc
 
 
@@ -189,7 +188,7 @@ async def stream_site_html(prompt: str) -> AsyncGenerator[str]:
                     _echo(chunk)
                     yield chunk
         except Exception as exc:
-            print(f"[ОШИБКА ГЕНЕРАЦИИ] {exc}", file=sys.stderr)
+            logger.error("ОШИБКА ГЕНЕРАЦИИ: %s", exc)
             if not generator.html_page.html_code:
                 yield f"<!DOCTYPE html><html><body><h1>Не удалось сгенерировать страницу</h1><p>{exc}</p></body></html>"
         finally:

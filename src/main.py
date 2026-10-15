@@ -10,11 +10,15 @@ from fastapi import APIRouter, FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from env_settings import settings
+from logging_config import get_logger, setup_logging
 from routers.sites import router as sites_router
 from s3_client import ensure_bucket
 from schemas import UserDetailsResponse
 
+logger = get_logger(__name__)
 STATIC_DIR = Path(__file__).parent / "static"
+
+setup_logging(debug=settings.debug)
 
 
 @asynccontextmanager
@@ -68,4 +72,4 @@ app.include_router(router, prefix="/frontend-api")
 app.include_router(sites_router, prefix="/frontend-api")
 app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
 
-print(settings.model_dump_json(indent=4))
+logger.info(settings.model_dump_json(indent=4))
