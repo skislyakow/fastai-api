@@ -15,8 +15,8 @@ from site_service import (
     SITE_HTML_PATH,
     SITES,
     build_site,
+    create_mock_site,
     get_next_id,
-    mock_site,
     relay_html,
     run_in_background,
     stream_queue,
@@ -140,4 +140,4 @@ def get_site_screenshot(request: Request, site_id: int) -> FileResponse:
     },
 )
 def get_site(site_id: int) -> SiteResponse:
-    return SITES.get(site_id) or mock_site(site_id=site_id)
+    return SITES.get(site_id) or create_mock_site(site_id=site_id)

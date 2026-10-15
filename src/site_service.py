@@ -110,7 +110,7 @@ def build_site(
     )
 
 
-def mock_site(site_id: int = 1) -> SiteResponse:
+def create_mock_site(site_id: int = 1) -> SiteResponse:
     html_url, download_url, screenshot_url = s3_urls(site_id)
     return SiteResponse(
         id=site_id,

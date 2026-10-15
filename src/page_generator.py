@@ -43,7 +43,7 @@ DEFAULT_PROMPT = (
 MAX_ATTEMPTS = 3
 
 
-def _echo(chunk: str) -> None:
+def _log_chunk(chunk: str) -> None:
     if settings.debug:
         logger.debug("%s", chunk)
 
@@ -169,12 +169,12 @@ async def _stream_html(
     prompt: str,
 ) -> AsyncGenerator[str]:
     async for chunk in generator.generate_html(prompt):
-        _echo(chunk)
+        _log_chunk(chunk)
         yield chunk
     await generator.check_html()
     if not generator.html_page.is_valid:
         async for chunk in generator.regenerate_html():
-            _echo(chunk)
+            _log_chunk(chunk)
             yield chunk
 
 
