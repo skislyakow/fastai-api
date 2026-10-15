@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Annotated
 
-from pydantic import BaseModel, EmailStr, Field, StringConstraints
+from pydantic import AnyHttpUrl, BaseModel, EmailStr, Field, StringConstraints
 
 
 class UserDetailsResponse(BaseModel):
@@ -62,15 +62,15 @@ class SiteResponse(BaseModel):
         description="Название сайта",
         examples=["Стегозавры"],
     )
-    htmlCodeUrl: str | None = Field(
+    htmlCodeUrl: AnyHttpUrl | None = Field(
         description="Ссылка на html-код сайта",
         examples=["https://google.com"],
     )
-    htmlCodeDownloadUrl: str | None = Field(
+    htmlCodeDownloadUrl: AnyHttpUrl | None = Field(
         description="Ссылка на скачивание HTML-кода сайта",
         examples=["https://google.com"],
     )
-    screenshotUrl: str | None = Field(
+    screenshotUrl: AnyHttpUrl | None = Field(
         description="Ссылка на скриншот сайта",
         examples=["https://google.com"],
     )
