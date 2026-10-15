@@ -1,7 +1,7 @@
 import asyncio
 from pathlib import Path
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 
 from env_settings import settings
@@ -100,11 +100,9 @@ async def generate_site(
     "/{site_id}/html",
     summary="Просмотр HTML кода сайта",
 )
-def view_site_html(
-    request: Request,
-    site_id: int,
-    download: bool = False,
-) -> FileResponse:
+def view_site_html(site_id: int, download: bool = False) -> FileResponse:
+    if site_id not in SITES:
+        raise HTTPException(status_code=404, detail="Site not found")
     path = SITE_HTML_PATH if SITE_HTML_PATH.exists() else HTML_STUB_PATH
     return FileResponse(
         path,
