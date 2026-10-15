@@ -128,6 +128,10 @@ headless-браузера.
    постоянному ключу `screenshot.jpg` с `ContentType="image/jpeg"` и
    `ContentDisposition="inline"`.
 
+HTTP-клиент Gotenberg создаётся один раз при старте приложения (в `lifespan`,
+`app.state.gotenberg`) и переиспользуется для всех скриншотов, поэтому
+`GOTENBERG__MAX_CONNECTIONS` ограничивает общий пул соединений.
+
 Ключ `screenshot.jpg` фиксированный, поэтому `screenshotUrl` в ответах API **не
 меняется** — при каждой генерации перезаписывается только содержимое объекта.
 

@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+import httpx
 from fastapi import APIRouter, Request
 from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 
@@ -54,11 +55,20 @@ def _run_in_background(coro: Any) -> None:
     task.add_done_callback(_BACKGROUND_TASKS.discard)
 
 
+async def cancel_background_tasks() -> None:
+    tasks = list(_BACKGROUND_TASKS)
+    for task in tasks:
+        task.cancel()
+    if tasks:
+        await asyncio.gather(*tasks, return_exceptions=True)
+
+
 async def _relay_html(
     queue: asyncio.Queue[str | None],
     *,
     prompt: str,
     s3: Any,
+    gotenberg: httpx.AsyncClient,
     bucket: str,
     site_id: int,
 ) -> None:
@@ -68,7 +78,7 @@ async def _relay_html(
         if SITE_HTML_PATH.exists():
             html_code = SITE_HTML_PATH.read_text(encoding="utf-8")
             await upload_html(s3, bucket, site_html_key(site_id), html_code)
-            screenshot_bytes = await render_screenshot(html_code)
+            screenshot_bytes = await render_screenshot(gotenberg, html_code)
             if screenshot_bytes:
                 await upload_screenshot(
                     s3,
@@ -185,6 +195,7 @@ async def generate_site(
             queue,
             prompt=prompt,
             s3=request.app.state.s3,
+            gotenberg=request.app.state.gotenberg,
             bucket=settings.s3.bucket_name,
             site_id=site_id,
         ),

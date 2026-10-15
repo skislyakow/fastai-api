@@ -10,7 +10,6 @@ import anyio.to_thread
 from html_page_generator import (
     AsyncDeepseekClient,
     AsyncPageGenerator,
-    AsyncUnsplashClient,
 )
 from html_page_generator._html_page_generator import (
     FIND_IMAGES_PROMPT,
@@ -179,25 +178,13 @@ async def _stream_html(
 
 
 async def stream_site_html(prompt: str) -> AsyncGenerator[str]:
-    async with (
-        AsyncUnsplashClient.setup(
-            settings.unsplash.api_key.get_secret_value(),
-            timeout=settings.unsplash.timeout,
-            **build_unsplash_client_kwargs(),
-        ),
-        AsyncDeepseekClient.setup(
-            settings.deepseek.api_key.get_secret_value(),
-            timeout=settings.deepseek.timeout,
-            **build_deepseek_client_kwargs(),
-        ),
-    ):
-        generator = StreamPageGenerator(debug_mode=settings.debug)
-        try:
-            async for chunk in _stream_html(generator, prompt):
-                yield chunk
-        except Exception as exc:
-            logger.error("ОШИБКА ГЕНЕРАЦИИ: %s", exc)
-            if not generator.html_page.html_code:
-                yield f"<!DOCTYPE html><html><body><h1>Не удалось сгенерировать страницу</h1><p>{exc}</p></body></html>"
-        finally:
-            await save_generated_site(generator)
+    generator = StreamPageGenerator(debug_mode=settings.debug)
+    try:
+        async for chunk in _stream_html(generator, prompt):
+            yield chunk
+    except Exception as exc:
+        logger.error("ОШИБКА ГЕНЕРАЦИИ: %s", exc)
+        if not generator.html_page.html_code:
+            yield f"<!DOCTYPE html><html><body><h1>Не удалось сгенерировать страницу</h1><p>{exc}</p></body></html>"
+    finally:
+        await save_generated_site(generator)

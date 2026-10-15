@@ -7,22 +7,16 @@ from logging_config import get_logger
 logger = get_logger(__name__)
 
 
-async def render_screenshot(html_code: str) -> bytes | None:
+async def render_screenshot(client: httpx.AsyncClient, html_code: str) -> bytes | None:
     gotenberg = settings.gotenberg
-    timeout = gotenberg.timeout
     try:
-        async with httpx.AsyncClient(
-            base_url=str(gotenberg.endpoint_url),
-            timeout=timeout,
-            limits=httpx.Limits(max_connections=gotenberg.max_connections),
-        ) as client:
-            request = ScreenshotHTMLRequest(
-                index_html=html_code,
-                width=gotenberg.width,
-                format=gotenberg.default_screenshot_format,
-                wait_delay=gotenberg.wait_delay,
-            )
-            return await request.asend(client)
+        request = ScreenshotHTMLRequest(
+            index_html=html_code,
+            width=gotenberg.width,
+            format=gotenberg.default_screenshot_format,
+            wait_delay=gotenberg.wait_delay,
+        )
+        return await request.asend(client)
     except GotenbergServerError as exc:
         logger.error("ОШИБКА СКРИНШОТА: %s", exc)
         return None
