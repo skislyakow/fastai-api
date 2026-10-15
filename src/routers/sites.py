@@ -31,15 +31,16 @@ router = APIRouter(prefix="/sites", tags=["Sites"])
 
 def _s3_urls(site_id: int) -> tuple[str, str, str]:
     s3 = settings.s3
+    endpoint_url = str(s3.endpoint_url)
     html_key = site_html_key(site_id)
-    html_url = object_url(s3.endpoint_url, s3.bucket_name, html_key)
+    html_url = object_url(endpoint_url, s3.bucket_name, html_key)
     download_url = object_url(
-        s3.endpoint_url,
+        endpoint_url,
         s3.bucket_name,
         html_key,
         attachment_filename="index.html",
     )
-    screenshot_url = object_url(s3.endpoint_url, s3.bucket_name, SCREENSHOT_KEY)
+    screenshot_url = object_url(endpoint_url, s3.bucket_name, SCREENSHOT_KEY)
     return html_url, download_url, screenshot_url
 
 

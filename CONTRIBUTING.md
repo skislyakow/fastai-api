@@ -381,7 +381,7 @@ GOTENBERG__DEFAULT_SCREENSHOT_FORMAT=jpeg   # png | jpeg | webp
 
 | Переменная | Обязательная | По умолчанию | Описание и выбор значения |
 |---|---|---|---|
-| `GOTENBERG__ENDPOINT_URL` | да | — | URL API Gotenberg. Стандартный публичный API — `https://demo.gotenberg.dev` (проверка доступности — `GET /health`); для локального сервера укажите свой адрес. |
+| `GOTENBERG__ENDPOINT_URL` | да | — | URL API Gotenberg. Стандартный публичный API — `https://demo.gotenberg.dev` (проверка доступности — `GET /health`); для локального сервера укажите свой адрес. Значение — полный `http(s)`-URL, проверяется при старте. |
 | `GOTENBERG__MAX_CONNECTIONS` | нет | `5` | Лимит одновременных подключений. |
 | `GOTENBERG__TIMEOUT` | нет | `10` | Таймаут клиента, сек. Берите на 2–5 сек больше `WAIT_DELAY`, иначе скриншот не успеет сняться. |
 | `GOTENBERG__WIDTH` | нет | `1280` | Ширина скриншота, пикс. |

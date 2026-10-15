@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, SecretStr
+from pydantic import AnyHttpUrl, BaseModel, ConfigDict, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 SCREENSHOT_FORMAT = Literal["png", "jpeg", "webp"]
@@ -11,7 +11,7 @@ class DeepSeekSettings(BaseModel):
     api_key: SecretStr
     max_connections: int | None = Field(default=None, gt=0)
     timeout: int | None = Field(default=None, gt=0)
-    base_url: str | None = None
+    base_url: AnyHttpUrl | None = None
     model: str | None = None
 
 
@@ -20,12 +20,12 @@ class UnsplashSettings(BaseModel):
     api_key: SecretStr
     max_connections: int | None = Field(default=None, gt=0)
     timeout: int | None = Field(default=None, gt=0)
-    proxy: str | None = None
+    proxy: AnyHttpUrl | None = None
 
 
 class S3Settings(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    endpoint_url: str = "http://localhost:9000"
+    model_config = ConfigDict(extra="forbid", validate_default=True)
+    endpoint_url: AnyHttpUrl = "http://localhost:9000"
     access_key_id: SecretStr
     secret_access_key: SecretStr
     bucket_name: str = "fastai-sites"
@@ -37,7 +37,7 @@ class S3Settings(BaseModel):
 
 class GotenbergSettings(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    endpoint_url: str
+    endpoint_url: AnyHttpUrl
     max_connections: int = Field(default=5, gt=0)
     timeout: int = Field(default=10, gt=0)
     width: int = Field(default=1280, gt=0)

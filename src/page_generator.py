@@ -72,7 +72,7 @@ async def ainvoke_with_retry(
 def build_deepseek_client_kwargs() -> dict[str, str]:
     kwargs: dict[str, str] = {}
     if settings.deepseek.base_url:
-        kwargs["deepseek_base_url"] = settings.deepseek.base_url
+        kwargs["deepseek_base_url"] = str(settings.deepseek.base_url)
     if settings.deepseek.model:
         kwargs["deepseek_model"] = settings.deepseek.model
     return kwargs
@@ -81,7 +81,7 @@ def build_deepseek_client_kwargs() -> dict[str, str]:
 def build_unsplash_client_kwargs() -> dict[str, str]:
     kwargs: dict[str, str] = {}
     if settings.unsplash.proxy:
-        kwargs["proxy"] = settings.unsplash.proxy
+        kwargs["proxy"] = str(settings.unsplash.proxy)
     return kwargs
 
 

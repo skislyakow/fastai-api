@@ -91,12 +91,12 @@ $ git check-ignore -v .env
 | `DEEPSEEK__API_KEY` | да | — | API-ключ DeepSeek |
 | `DEEPSEEK__MAX_CONNECTIONS` | нет | `None` | Максимальное количество соединений |
 | `DEEPSEEK__TIMEOUT` | нет | `None` | Таймаут соединения, секунды |
-| `DEEPSEEK__BASE_URL` | нет | `None` | Базовый URL API (для совместимых провайдеров) |
+| `DEEPSEEK__BASE_URL` | нет | `None` | Базовый URL API (для совместимых провайдеров). Полный `http(s)`-URL; проверяется при старте |
 | `DEEPSEEK__MODEL` | нет | `deepseek-chat` | Имя модели |
 | `UNSPLASH__API_KEY` | да | — | Access Key приложения Unsplash |
 | `UNSPLASH__MAX_CONNECTIONS` | нет | `None` | Максимальное количество соединений |
 | `UNSPLASH__TIMEOUT` | нет | `None` | Таймаут соединения, секунды |
-| `UNSPLASH__PROXY` | нет | `None` | HTTP-прокси для запросов к Unsplash |
+| `UNSPLASH__PROXY` | нет | `None` | HTTP-прокси для запросов к Unsplash. Полный `http(s)`-URL; проверяется при старте |
 | `DEBUG` | нет | `false` | Режим отладки |
 
 ### Откуда взять значения
@@ -336,7 +336,7 @@ http://localhost:9000/fastai-sites/screenshot.jpg
 
 | Переменная | Обязательная | По умолчанию | Описание |
 |---|---|---|---|
-| `S3__ENDPOINT_URL` | нет | `http://localhost:9000` | Адрес S3-совместимого API |
+| `S3__ENDPOINT_URL` | нет | `http://localhost:9000` | Адрес S3-совместимого API. Полный `http(s)`-URL; проверяется при старте |
 | `S3__ACCESS_KEY_ID` | да | — | AWS Access Key (`MINIO_ROOT_USER`) |
 | `S3__SECRET_ACCESS_KEY` | да | — | AWS Secret Key (`MINIO_ROOT_PASSWORD`) |
 | `S3__BUCKET_NAME` | нет | `fastai-sites` | Имя бакета |
@@ -378,7 +378,7 @@ http://localhost:9000/fastai-sites/screenshot.jpg
 
 | Переменная | Обязательная | По умолчанию | Описание |
 |---|---|---|---|
-| `GOTENBERG__ENDPOINT_URL` | да | — | URL API Gotenberg для скриншотов |
+| `GOTENBERG__ENDPOINT_URL` | да | — | URL API Gotenberg для скриншотов. Полный `http(s)`-URL; проверяется при старте |
 | `GOTENBERG__MAX_CONNECTIONS` | нет | `5` | Лимит одновременных подключений |
 | `GOTENBERG__TIMEOUT` | нет | `10` | Таймаут клиента Gotenberg, сек (на 2–5 сек больше `WAIT_DELAY`) |
 | `GOTENBERG__WIDTH` | нет | `1280` | Ширина скриншота, пикс |

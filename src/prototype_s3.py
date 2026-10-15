@@ -103,7 +103,7 @@ async def print_head(s3: Any, bucket: str, key: str) -> None:
 async def main() -> None:
     s3_settings = settings.s3
     bucket = s3_settings.bucket_name
-    endpoint_url = s3_settings.endpoint_url
+    endpoint_url = str(s3_settings.endpoint_url)
 
     async with create_s3_client() as s3:
         await ensure_bucket(s3, bucket)
