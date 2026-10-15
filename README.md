@@ -254,8 +254,8 @@ CONTRIBUTING).
 - `image/jpeg` — для скриншотов (например, `screenshot.jpg`);
 - `image/png` — для изображений в формате PNG.
 
-Пример кодовой загрузки — `src/prototype_s3.py` (запуск: `uv run python
-src/prototype_s3.py`).
+Пример кодовой загрузки — функции `upload_html()` и `upload_screenshot()` в
+`src/s3_client.py`.
 
 `Content-Disposition` определяет способ доступа к файлу по публичной ссылке:
 
