@@ -24,7 +24,7 @@ from langchain_deepseek import ChatDeepSeek
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.prebuilt import ToolNode, create_react_agent
 
-from config.env_settings import settings
+from config.env_settings import DeepSeekSettings, UnsplashSettings
 from config.logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -43,8 +43,8 @@ DEFAULT_PROMPT = (
 MAX_ATTEMPTS = 3
 
 
-def _log_chunk(chunk: str) -> None:
-    if settings.debug:
+def _log_chunk(chunk: str, *, debug: bool) -> None:
+    if debug:
         logger.debug("%s", chunk)
 
 
@@ -69,19 +69,19 @@ async def ainvoke_with_retry(
     raise RuntimeError(f"Генерация не удалась после {MAX_ATTEMPTS} попыток.") from last_exc
 
 
-def build_deepseek_client_kwargs() -> dict[str, str]:
+def build_deepseek_client_kwargs(deepseek_settings: DeepSeekSettings) -> dict[str, str]:
     kwargs: dict[str, str] = {}
-    if settings.deepseek.base_url:
-        kwargs["deepseek_base_url"] = str(settings.deepseek.base_url)
-    if settings.deepseek.model:
-        kwargs["deepseek_model"] = settings.deepseek.model
+    if deepseek_settings.base_url:
+        kwargs["deepseek_base_url"] = str(deepseek_settings.base_url)
+    if deepseek_settings.model:
+        kwargs["deepseek_model"] = deepseek_settings.model
     return kwargs
 
 
-def build_unsplash_client_kwargs() -> dict[str, str]:
+def build_unsplash_client_kwargs(unsplash_settings: UnsplashSettings) -> dict[str, str]:
     kwargs: dict[str, str] = {}
-    if settings.unsplash.proxy:
-        kwargs["proxy"] = str(settings.unsplash.proxy)
+    if unsplash_settings.proxy:
+        kwargs["proxy"] = str(unsplash_settings.proxy)
     return kwargs
 
 
@@ -167,21 +167,23 @@ async def save_generated_site(generator: StreamPageGenerator) -> None:
 async def _stream_html(
     generator: StreamPageGenerator,
     prompt: str,
+    *,
+    debug: bool,
 ) -> AsyncGenerator[str]:
     async for chunk in generator.generate_html(prompt):
-        _log_chunk(chunk)
+        _log_chunk(chunk, debug=debug)
         yield chunk
     await generator.check_html()
     if not generator.html_page.is_valid:
         async for chunk in generator.regenerate_html():
-            _log_chunk(chunk)
+            _log_chunk(chunk, debug=debug)
             yield chunk
 
 
-async def stream_site_html(prompt: str) -> AsyncGenerator[str]:
-    generator = StreamPageGenerator(debug_mode=settings.debug)
+async def stream_site_html(prompt: str, *, debug: bool) -> AsyncGenerator[str]:
+    generator = StreamPageGenerator(debug_mode=debug)
     try:
-        async for chunk in _stream_html(generator, prompt):
+        async for chunk in _stream_html(generator, prompt, debug=debug):
             yield chunk
     except Exception as exc:
         logger.error("ОШИБКА ГЕНЕРАЦИИ: %s", exc)

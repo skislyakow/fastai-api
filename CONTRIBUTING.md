@@ -360,18 +360,20 @@ S3__MAX_POOL_CONNECTIONS=10
 
 В `lifespan` создаются и все остальные долгоживущие внешние клиенты: DeepSeek и
 Unsplash (пакет `html-page-generator`) и HTTP-клиент Gotenberg (`httpx`). Они
-создаются один раз при старте, сохраняются в `app.state` (атрибуты `s3`,
-`deepseek`, `unsplash`, `gotenberg`) и закрываются при завершении приложения.
-Перед закрытием отменяются активные фоновые генерации, чтобы они не обращались
-к уже закрытым клиентам.
+создаются один раз при старте, сохраняются в `app.state` (атрибуты `settings`,
+`s3`, `deepseek`, `unsplash`, `gotenberg`) и закрываются при завершении
+приложения. Перед закрытием отменяются активные фоновые генерации, чтобы они не
+обращались к уже закрытым клиентам.
 
 #### Настройка Gotenberg (генерация скриншотов)
 
 После каждой генерации сайта приложение рендерит его скриншот через
 [Gotenberg](https://gotenberg.dev/): итоговый HTML отправляется в
-`render_screenshot()` (`src/clients/gotenberg.py`), а готовый JPEG загружается
-в бакет через `upload_screenshot()` (`src/clients/s3.py`) по постоянному ключу
-`SCREENSHOT_KEY = "screenshot.jpg"`.
+`render_screenshot()` (`src/clients/gotenberg.py`) вместе с явно переданными
+`GotenbergSettings`, а готовое изображение загружается в бакет через
+`upload_screenshot()` (`src/clients/s3.py`) по ключу из `build_screenshot_key()`
+(`screenshot.jpg` по умолчанию, `screenshot.png` для png, `screenshot.webp` для
+webp). MIME-тип определяет `get_screenshot_content_type()`.
 
 Заполните в `.env` группу `Gotenberg`:
 
@@ -431,9 +433,9 @@ http://localhost:9000/fastai-sites/index.png    — скриншот
 
 Ссылки, которые отдаёт код (`s3_urls()` в `src/clients/s3.py`:
 `htmlCodeUrl`, `htmlCodeDownloadUrl`, `screenshotUrl`), ведут на ключи
-`sites/1/index.html` и `screenshot.jpg` — первый загружайте в папку `sites/1/`,
-второй в корень бакета. Без них превью вернёт `404` и фронтенд будет выглядеть
-сломанным.
+`sites/1/index.html` и `screenshot.<ext>` (по умолчанию `screenshot.jpg`) —
+первый загружайте в папку `sites/1/`, второй в корень бакета. Без них превью
+вернёт `404` и фронтенд будет выглядеть сломанным.
 
 ```
 http://localhost:9000/fastai-sites/sites/1/index.html   — HTML по ссылке из API
@@ -441,8 +443,8 @@ http://localhost:9000/fastai-sites/screenshot.jpg       — скриншот п�
 ```
 
 Загружать нужно один раз: после первой генерации сайта HTML и скриншот
-заливаются приложением автоматически (`screenshot.jpg` перезаписывается
-при каждой генерации).
+заливаются приложением автоматически (скриншот перезаписывается при каждой
+генерации).
 
 #### Загрузка файлов из python-кода
 
@@ -457,14 +459,16 @@ http://localhost:9000/fastai-sites/screenshot.jpg       — скриншот п�
 MIME-типы, используемые в проекте:
 
 - `text/html` — HTML-файлы (например, `hello.html`, `sites/1/index.html`);
-- `image/jpeg` — скриншоты (`screenshot.jpg`).
+- `image/jpeg`, `image/png`, `image/webp` — скриншоты; MIME соответствует
+  `GOTENBERG__DEFAULT_SCREENSHOT_FORMAT`.
 
 В коде приложения загрузка уже реализована в `src/clients/s3.py`:
 
 - `upload_html()` — указывает `ContentType="text/html"` и
   `ContentDisposition="inline"`;
-- `upload_screenshot()` — указывает `ContentType="image/jpeg"` и
-  `ContentDisposition="inline"`, загружает JPEG по ключу `screenshot.jpg`.
+- `upload_screenshot()` — принимает MIME-тип из
+  `get_screenshot_content_type()`, указывает `ContentDisposition="inline"` и
+  загружает изображение по ключу из `build_screenshot_key()`.
 
 Публичные адреса после загрузки:
 
@@ -477,7 +481,7 @@ http://localhost:9000/fastai-sites/screenshot.jpg
 
 - `sites/{site_id}/index.html` — сгенерированный HTML сайта (перезаписывается
   при каждой генерации);
-- `screenshot.jpg` — единый скриншот;
+- `screenshot.<ext>` (`screenshot.jpg` по умолчанию) — скриншот;
 - `hello.html` — тестовый файл для ручной проверки.
 
 ## Как вести разработку

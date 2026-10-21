@@ -23,8 +23,9 @@ setup_logging(debug=settings.debug)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    app.state.settings = settings
     async with AsyncExitStack() as stack:
-        s3 = await stack.enter_async_context(create_s3_client())
+        s3 = await stack.enter_async_context(create_s3_client(settings.s3))
         await ensure_bucket(s3, settings.s3.bucket_name)
         app.state.s3 = s3
 
@@ -33,7 +34,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
                 settings.unsplash.api_key.get_secret_value(),
                 timeout=settings.unsplash.timeout,
                 limits=httpx.Limits(max_connections=settings.unsplash.max_connections),
-                **build_unsplash_client_kwargs(),
+                **build_unsplash_client_kwargs(settings.unsplash),
             ),
         )
         app.state.unsplash = AsyncUnsplashClient.get_initialized_instance()
@@ -43,7 +44,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
                 settings.deepseek.api_key.get_secret_value(),
                 timeout=settings.deepseek.timeout,
                 limits=httpx.Limits(max_connections=settings.deepseek.max_connections),
-                **build_deepseek_client_kwargs(),
+                **build_deepseek_client_kwargs(settings.deepseek),
             ),
         )
         app.state.deepseek = AsyncDeepseekClient.get_initialized_instance()

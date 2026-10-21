@@ -115,25 +115,29 @@ $ git check-ignore -v .env
 ## Генерация скриншотов (Gotenberg)
 
 После завершения генерации HTML приложение рендерит скриншот страницы через
-[Gotenberg](https://gotenberg.dev/) — сервис, который превращает HTML в JPEG из
-headless-браузера.
+[Gotenberg](https://gotenberg.dev/) — сервис, который превращает HTML в
+изображение (по умолчанию JPEG) из headless-браузера.
 
 Как это работает:
 
 1. `relay_html()` в `src/services/generation.py` после сохранения HTML вызывает
    `render_screenshot()` из `src/clients/gotenberg.py`.
 2. `render_screenshot()` отправляет итоговый HTML в Gotenberg
-   (`ScreenshotHTMLRequest`, пакет `gotenberg-api`) и возвращает JPEG-байты.
-3. `upload_screenshot()` из `src/clients/s3.py` загружает их в бакет по
-   постоянному ключу `screenshot.jpg` с `ContentType="image/jpeg"` и
-   `ContentDisposition="inline"`.
+   (`ScreenshotHTMLRequest`, пакет `gotenberg-api`) вместе с явно переданными
+   `GotenbergSettings` и возвращает байты изображения в формате
+   `GOTENBERG__DEFAULT_SCREENSHOT_FORMAT`.
+3. `upload_screenshot()` из `src/clients/s3.py` загружает их в бакет по ключу из
+   `build_screenshot_key()` (`screenshot.jpg` по умолчанию) с MIME-типом из
+   `get_screenshot_content_type()` и `ContentDisposition="inline"`.
 
 HTTP-клиент Gotenberg создаётся один раз при старте приложения (в `lifespan`,
 `app.state.gotenberg`) и переиспользуется для всех скриншотов, поэтому
 `GOTENBERG__MAX_CONNECTIONS` ограничивает общий пул соединений.
 
-Ключ `screenshot.jpg` фиксированный, поэтому `screenshotUrl` в ответах API **не
-меняется** — при каждой генерации перезаписывается только содержимое объекта.
+Ключ зависит от выбранного формата (`screenshot.jpg`, `screenshot.png` или
+`screenshot.webp`) и фиксирован для этого формата, поэтому `screenshotUrl` в
+ответах API **не меняется** между генерациями — перезаписывается только
+содержимое объекта.
 
 Если Gotenberg недоступен или рендер завершился ошибкой, `render_screenshot()`
 бросает `GotenbergServerError`: HTML к этому моменту уже загружен в S3, а
@@ -251,8 +255,9 @@ CONTRIBUTING).
 `ContentType` (MIME-тип) и `ContentDisposition="inline"`:
 
 - `text/html` — для HTML-файлов;
-- `image/jpeg` — для скриншотов (например, `screenshot.jpg`);
-- `image/png` — для изображений в формате PNG.
+- `image/jpeg`, `image/png`, `image/webp` — для скриншотов: MIME соответствует
+  `GOTENBERG__DEFAULT_SCREENSHOT_FORMAT` (по умолчанию JPEG, `screenshot.jpg`);
+- `image/png` — для прочих PNG-изображений.
 
 Пример кодовой загрузки — функции `upload_html()` и `upload_screenshot()` в
 `src/clients/s3.py`.
@@ -287,7 +292,8 @@ http://localhost:9000/fastai-sites/index.png
 ```
 
 Ссылки, которые отдаёт API, ведут на ключи `sites/1/index.html` и
-`screenshot.jpg`, поэтому до первой генерации их тоже кладут вручную:
+`screenshot.<ext>` (по умолчанию `screenshot.jpg`), поэтому до первой генерации
+их тоже кладут вручную:
 
 ```
 http://localhost:9000/fastai-sites/sites/1/index.html
@@ -296,7 +302,7 @@ http://localhost:9000/fastai-sites/screenshot.jpg
 
 Формат адреса: `{endpoint}/{bucket}/{key}`. Пока файлы не загружены в бакет,
 ссылки вернут `404` и фронтенд будет выглядеть сломанным. После первой
-генерации сайта HTML и `screenshot.jpg` заливаются приложением автоматически
+генерации сайта HTML и скриншот заливаются приложением автоматически
 (см. раздел «Генерация скриншотов (Gotenberg)»).
 
 Загрузка через веб-интерфейс (`:9001`):

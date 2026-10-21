@@ -7,15 +7,23 @@ from botocore.config import Config
 from botocore.exceptions import ClientError
 from pydantic import AnyHttpUrl
 
-from config.env_settings import settings
+from config.env_settings import SCREENSHOT_FORMAT, S3Settings
 
 SCREENSHOT_FORMATS = {
     "png": ("image/png", "png"),
     "jpeg": ("image/jpeg", "jpg"),
     "webp": ("image/webp", "webp"),
 }
-SCREENSHOT_MIME, SCREENSHOT_EXT = SCREENSHOT_FORMATS[settings.gotenberg.default_screenshot_format]
-SCREENSHOT_KEY = f"screenshot.{SCREENSHOT_EXT}"
+
+
+def build_screenshot_key(screenshot_format: SCREENSHOT_FORMAT) -> str:
+    _, extension = SCREENSHOT_FORMATS[screenshot_format]
+    return f"screenshot.{extension}"
+
+
+def get_screenshot_content_type(screenshot_format: SCREENSHOT_FORMAT) -> str:
+    content_type, _ = SCREENSHOT_FORMATS[screenshot_format]
+    return content_type
 
 
 def build_site_html_key(site_id: int) -> str:
@@ -61,35 +69,42 @@ def build_object_url(
     return f"{base_url}?{query}"
 
 
-def s3_urls(site_id: int) -> tuple[AnyHttpUrl, AnyHttpUrl, AnyHttpUrl]:
-    s3 = settings.s3
-    endpoint_url = str(s3.endpoint_url)
+def s3_urls(
+    site_id: int,
+    s3_settings: S3Settings,
+    screenshot_format: SCREENSHOT_FORMAT,
+) -> tuple[AnyHttpUrl, AnyHttpUrl, AnyHttpUrl]:
+    endpoint_url = str(s3_settings.endpoint_url)
     html_key = build_site_html_key(site_id)
-    html_url = build_object_url(endpoint_url, s3.bucket_name, html_key)
+    html_url = build_object_url(endpoint_url, s3_settings.bucket_name, html_key)
     download_url = build_object_url(
         endpoint_url,
-        s3.bucket_name,
+        s3_settings.bucket_name,
         html_key,
         attachment_filename="index.html",
     )
-    screenshot_url = build_object_url(endpoint_url, s3.bucket_name, SCREENSHOT_KEY)
+    screenshot_url = build_object_url(
+        endpoint_url,
+        s3_settings.bucket_name,
+        build_screenshot_key(screenshot_format),
+    )
     return AnyHttpUrl(html_url), AnyHttpUrl(download_url), AnyHttpUrl(screenshot_url)
 
 
-def create_s3_client() -> Any:
+def create_s3_client(s3_settings: S3Settings) -> Any:
     config = Config(
         signature_version="s3v4",
-        connect_timeout=settings.s3.connect_timeout,
-        read_timeout=settings.s3.read_timeout,
-        max_pool_connections=settings.s3.max_pool_connections,
+        connect_timeout=s3_settings.connect_timeout,
+        read_timeout=s3_settings.read_timeout,
+        max_pool_connections=s3_settings.max_pool_connections,
     )
 
     return aioboto3.Session().client(
         "s3",
-        endpoint_url=str(settings.s3.endpoint_url),
-        aws_access_key_id=settings.s3.access_key_id.get_secret_value(),
-        aws_secret_access_key=settings.s3.secret_access_key.get_secret_value(),
-        region_name=settings.s3.region_name,
+        endpoint_url=str(s3_settings.endpoint_url),
+        aws_access_key_id=s3_settings.access_key_id.get_secret_value(),
+        aws_secret_access_key=s3_settings.secret_access_key.get_secret_value(),
+        region_name=s3_settings.region_name,
         config=config,
     )
 

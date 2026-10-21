@@ -5,7 +5,14 @@ from typing import Any
 import httpx
 
 from clients.gotenberg import render_screenshot
-from clients.s3 import SCREENSHOT_KEY, SCREENSHOT_MIME, build_site_html_key, upload_html, upload_screenshot
+from clients.s3 import (
+    build_screenshot_key,
+    build_site_html_key,
+    get_screenshot_content_type,
+    upload_html,
+    upload_screenshot,
+)
+from config.env_settings import Settings
 from services.page_generator import SITE_HTML_PATH, stream_site_html
 from services.sites import update_site_timestamp
 
@@ -16,22 +23,28 @@ async def relay_html(
     prompt: str,
     s3: Any,
     gotenberg: httpx.AsyncClient,
-    bucket: str,
+    app_settings: Settings,
     site_id: int,
 ) -> None:
+    bucket = app_settings.s3.bucket_name
+    screenshot_format = app_settings.gotenberg.default_screenshot_format
     try:
-        async for chunk in stream_site_html(prompt):
+        async for chunk in stream_site_html(prompt, debug=app_settings.debug):
             await queue.put(chunk)
         if SITE_HTML_PATH.exists():
             html_code = SITE_HTML_PATH.read_text(encoding="utf-8")
             await upload_html(s3, bucket, build_site_html_key(site_id), html_code)
-            screenshot_bytes = await render_screenshot(gotenberg, html_code)
+            screenshot_bytes = await render_screenshot(
+                gotenberg,
+                html_code,
+                app_settings.gotenberg,
+            )
             await upload_screenshot(
                 s3,
                 bucket,
-                SCREENSHOT_KEY,
+                build_screenshot_key(screenshot_format),
                 screenshot_bytes,
-                SCREENSHOT_MIME,
+                get_screenshot_content_type(screenshot_format),
             )
         update_site_timestamp(site_id)
     finally:

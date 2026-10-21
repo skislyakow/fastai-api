@@ -4,7 +4,7 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 
-from config.env_settings import settings
+from config.env_settings import Settings
 from schemas import (
     CreateSiteRequest,
     GeneratedSitesResponse,
@@ -40,13 +40,17 @@ def get_user_sites() -> GeneratedSitesResponse:
 )
 def create_site(
     create_request: CreateSiteRequest,
+    request: Request,
 ) -> SiteResponse:
+    app_settings: Settings = request.app.state.settings
     site_id = get_next_id()
     title = create_request.title or create_request.prompt[:128]
     SITES[site_id] = build_site(
         site_id,
         title=title,
         prompt=create_request.prompt,
+        s3_settings=app_settings.s3,
+        screenshot_format=app_settings.gotenberg.default_screenshot_format,
     )
     return SITES[site_id]
 
@@ -77,13 +81,14 @@ async def generate_site(
 ) -> StreamingResponse:
     prompt = payload.prompt
     queue: asyncio.Queue[str | None] = asyncio.Queue()
+    app_settings: Settings = request.app.state.settings
     run_in_background(
         relay_html(
             queue,
             prompt=prompt,
             s3=request.app.state.s3,
             gotenberg=request.app.state.gotenberg,
-            bucket=settings.s3.bucket_name,
+            app_settings=app_settings,
             site_id=site_id,
         ),
     )
@@ -133,5 +138,10 @@ def get_site_screenshot(request: Request, site_id: int) -> FileResponse:
         },
     },
 )
-def get_site(site_id: int) -> SiteResponse:
-    return SITES.get(site_id) or create_mock_site(site_id=site_id)
+def get_site(site_id: int, request: Request) -> SiteResponse:
+    app_settings: Settings = request.app.state.settings
+    return SITES.get(site_id) or create_mock_site(
+        site_id=site_id,
+        s3_settings=app_settings.s3,
+        screenshot_format=app_settings.gotenberg.default_screenshot_format,
+    )

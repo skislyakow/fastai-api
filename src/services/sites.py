@@ -1,6 +1,7 @@
 from datetime import UTC, datetime
 
 from clients.s3 import s3_urls
+from config.env_settings import SCREENSHOT_FORMAT, S3Settings
 from schemas import SiteResponse
 
 SITES: dict[int, SiteResponse] = {}
@@ -15,32 +16,43 @@ def build_site(
     *,
     title: str,
     prompt: str,
+    s3_settings: S3Settings,
+    screenshot_format: SCREENSHOT_FORMAT,
 ) -> SiteResponse:
-    html_url, download_url, screenshot_url = s3_urls(site_id)
+    html_url, download_url, screenshot_url = s3_urls(site_id, s3_settings, screenshot_format)
     now = datetime.now(UTC)
-    return SiteResponse(
-        id=site_id,
-        title=title,
-        html_code_url=html_url,
-        html_code_download_url=download_url,
-        screenshot_url=screenshot_url,
-        prompt=prompt,
-        created_at=now,
-        updated_at=now,
+    return SiteResponse.model_validate(
+        {
+            "id": site_id,
+            "title": title,
+            "html_code_url": html_url,
+            "html_code_download_url": download_url,
+            "screenshot_url": screenshot_url,
+            "prompt": prompt,
+            "created_at": now,
+            "updated_at": now,
+        }
     )
 
 
-def create_mock_site(site_id: int = 1) -> SiteResponse:
-    html_url, download_url, screenshot_url = s3_urls(site_id)
-    return SiteResponse(
-        id=site_id,
-        title="Стегозавры",
-        html_code_url=html_url,
-        html_code_download_url=download_url,
-        screenshot_url=screenshot_url,
-        prompt="Сделай сайт про Стегозавров",
-        created_at=datetime(2025, 6, 15, 18, 29, 56, tzinfo=UTC),
-        updated_at=datetime(2025, 6, 15, 18, 29, 56, tzinfo=UTC),
+def create_mock_site(
+    site_id: int = 1,
+    *,
+    s3_settings: S3Settings,
+    screenshot_format: SCREENSHOT_FORMAT,
+) -> SiteResponse:
+    html_url, download_url, screenshot_url = s3_urls(site_id, s3_settings, screenshot_format)
+    return SiteResponse.model_validate(
+        {
+            "id": site_id,
+            "title": "Стегозавры",
+            "html_code_url": html_url,
+            "html_code_download_url": download_url,
+            "screenshot_url": screenshot_url,
+            "prompt": "Сделай сайт про Стегозавров",
+            "created_at": datetime(2025, 6, 15, 18, 29, 56, tzinfo=UTC),
+            "updated_at": datetime(2025, 6, 15, 18, 29, 56, tzinfo=UTC),
+        }
     )
 
 
