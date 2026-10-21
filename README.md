@@ -89,13 +89,13 @@ $ git check-ignore -v .env
 | Переменная | Обязательная | По умолчанию | Описание |
 |---|---|---|---|
 | `DEEPSEEK__API_KEY` | да | — | API-ключ DeepSeek |
-| `DEEPSEEK__MAX_CONNECTIONS` | нет | `None` | Максимальное количество соединений |
-| `DEEPSEEK__TIMEOUT` | нет | `None` | Таймаут соединения, секунды |
+| `DEEPSEEK__MAX_CONNECTIONS` | нет | `5` | Максимальное количество соединений |
+| `DEEPSEEK__TIMEOUT` | нет | `120` | Таймаут соединения, секунды |
 | `DEEPSEEK__BASE_URL` | нет | `None` | Базовый URL API (для совместимых провайдеров). Полный `http(s)`-URL; проверяется при старте |
 | `DEEPSEEK__MODEL` | нет | `deepseek-chat` | Имя модели |
 | `UNSPLASH__API_KEY` | да | — | Access Key приложения Unsplash |
-| `UNSPLASH__MAX_CONNECTIONS` | нет | `None` | Максимальное количество соединений |
-| `UNSPLASH__TIMEOUT` | нет | `None` | Таймаут соединения, секунды |
+| `UNSPLASH__MAX_CONNECTIONS` | нет | `5` | Максимальное количество соединений |
+| `UNSPLASH__TIMEOUT` | нет | `20` | Таймаут соединения, секунды |
 | `UNSPLASH__PROXY` | нет | `None` | HTTP-прокси для запросов к Unsplash. Полный `http(s)`-URL; проверяется при старте |
 | `DEBUG` | нет | `false` | Режим отладки |
 
@@ -120,7 +120,7 @@ headless-браузера.
 
 Как это работает:
 
-1. `_relay_html()` в `src/routers/sites.py` после сохранения HTML вызывает
+1. `relay_html()` в `src/site_service.py` после сохранения HTML вызывает
    `render_screenshot()` из `src/gotenberg_client.py`.
 2. `render_screenshot()` отправляет итоговый HTML в Gotenberg
    (`ScreenshotHTMLRequest`, пакет `gotenberg-api`) и возвращает JPEG-байты.
@@ -136,8 +136,8 @@ HTTP-клиент Gotenberg создаётся один раз при старт
 меняется** — при каждой генерации перезаписывается только содержимое объекта.
 
 Если Gotenberg недоступен или рендер завершился ошибкой, `render_screenshot()`
-возвращает `None`, а генерация сайта продолжается: HTML сохраняется, скриншот
-остаётся прежним.
+бросает `GotenbergServerError`: HTML к этому моменту уже загружен в S3, а
+прежний скриншот остаётся без изменений.
 
 Правило таймаутов: `GOTENBERG__TIMEOUT` должен быть на 2–5 секунд больше
 `GOTENBERG__WAIT_DELAY`, иначе страница не успеет догрузить анимации до
@@ -345,9 +345,9 @@ http://localhost:9000/fastai-sites/screenshot.jpg
 | `S3__SECRET_ACCESS_KEY` | да | — | AWS Secret Key (`MINIO_ROOT_PASSWORD`) |
 | `S3__BUCKET_NAME` | нет | `fastai-sites` | Имя бакета |
 | `S3__REGION_NAME` | нет | `us-east-1` | Регион S3 |
-| `S3__CONNECT_TIMEOUT` | нет | — (дефолт botocore, 60 с) | Таймаут подключения, сек |
-| `S3__READ_TIMEOUT` | нет | — (дефолт botocore, 60 с) | Таймаут чтения, сек |
-| `S3__MAX_POOL_CONNECTIONS` | нет | — (дефолт botocore, 10) | Лимит одновременных подключений |
+| `S3__CONNECT_TIMEOUT` | нет | `5` | Таймаут подключения, сек |
+| `S3__READ_TIMEOUT` | нет | `60` | Таймаут чтения, сек |
+| `S3__MAX_POOL_CONNECTIONS` | нет | `10` | Лимит одновременных подключений |
 
 ### Настройка подключения к Gotenberg (.env)
 
@@ -389,8 +389,9 @@ http://localhost:9000/fastai-sites/screenshot.jpg
 | `GOTENBERG__WAIT_DELAY` | нет | `8` | Пауза на загрузку анимаций страницы, сек |
 | `GOTENBERG__DEFAULT_SCREENSHOT_FORMAT` | нет | `jpeg` | Формат скриншота: `png`, `jpeg`, `webp` |
 
-Если Gotenberg недоступен, `render_screenshot()` возвращает `None`: генерация
-сайта продолжается, а на месте скриншота сохраняется прежнее изображение.
+Если Gotenberg недоступен, `render_screenshot()` бросает
+`GotenbergServerError`: HTML уже загружен в S3, а прежний скриншот остаётся
+без изменений.
 
 ### Полезные ссылки
 

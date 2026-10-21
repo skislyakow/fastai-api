@@ -32,6 +32,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             AsyncUnsplashClient.setup(
                 settings.unsplash.api_key.get_secret_value(),
                 timeout=settings.unsplash.timeout,
+                limits=httpx.Limits(max_connections=settings.unsplash.max_connections),
                 **build_unsplash_client_kwargs(),
             ),
         )
@@ -41,6 +42,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             AsyncDeepseekClient.setup(
                 settings.deepseek.api_key.get_secret_value(),
                 timeout=settings.deepseek.timeout,
+                limits=httpx.Limits(max_connections=settings.deepseek.max_connections),
                 **build_deepseek_client_kwargs(),
             ),
         )

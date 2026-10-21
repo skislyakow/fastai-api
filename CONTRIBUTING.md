@@ -397,13 +397,14 @@ GOTENBERG__DEFAULT_SCREENSHOT_FORMAT=jpeg   # png | jpeg | webp
 | `GOTENBERG__WAIT_DELAY` | нет | `8` | Пауза для загрузки анимаций страницы, сек. Для тяжёлых страниц увеличьте. |
 | `GOTENBERG__DEFAULT_SCREENSHOT_FORMAT` | нет | `jpeg` | Формат скриншота: `png`, `jpeg`, `webp`. |
 
-Если Gotenberg недоступен, `render_screenshot()` возвращает `None`: генерация
-сайта продолжается, а на месте скриншота сохраняется прежнее изображение.
+Если Gotenberg недоступен, `render_screenshot()` бросает
+`GotenbergServerError`: HTML уже загружен в S3, а прежний скриншот остаётся
+без изменений.
 
 #### Ручная загрузка первых файлов
 
 Фронтенд показывает превью сгенерированных сайтов: код HTML и скриншот. Ссылки
-на эти файлы в коде формирует `_s3_urls()` в `src/routers/sites.py` и отдаёт их
+на эти файлы в коде формирует `s3_urls()` в `src/site_service.py` и отдаёт их
 в API как `htmlCodeUrl` / `htmlCodeDownloadUrl` / `screenshotUrl` — по ним
 фронтенд загружает превью и картинку. Файлы должны лежать в бакете заранее,
 иначе превью и скриншоты вернут `404` и фронтенд будет выглядеть сломанным.
@@ -428,7 +429,7 @@ http://localhost:9000/fastai-sites/index.png    — скриншот
 
 Формат адреса: `{S3__ENDPOINT_URL}/{S3__BUCKET_NAME}/{key}`.
 
-Ссылки, которые отдаёт код (`_s3_urls()` в `src/routers/sites.py`:
+Ссылки, которые отдаёт код (`s3_urls()` в `src/site_service.py`:
 `htmlCodeUrl`, `htmlCodeDownloadUrl`, `screenshotUrl`), ведут на ключи
 `sites/1/index.html` и `screenshot.jpg` — первый загружайте в папку `sites/1/`,
 второй в корень бакета. Без них превью вернёт `404` и фронтенд будет выглядеть

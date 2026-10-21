@@ -9,8 +9,8 @@ SCREENSHOT_FORMAT = Literal["png", "jpeg", "webp"]
 class DeepSeekSettings(BaseModel):
     model_config = ConfigDict(extra="forbid")
     api_key: SecretStr
-    max_connections: PositiveInt | None = None
-    timeout: PositiveInt | None = None
+    max_connections: PositiveInt = 5
+    timeout: PositiveInt = 120
     base_url: AnyHttpUrl | None = None
     model: str | None = None
 
@@ -18,8 +18,8 @@ class DeepSeekSettings(BaseModel):
 class UnsplashSettings(BaseModel):
     model_config = ConfigDict(extra="forbid")
     api_key: SecretStr
-    max_connections: PositiveInt | None = None
-    timeout: PositiveInt | None = None
+    max_connections: PositiveInt = 5
+    timeout: PositiveInt = 20
     proxy: AnyHttpUrl | None = None
 
 
@@ -30,9 +30,9 @@ class S3Settings(BaseModel):
     secret_access_key: SecretStr
     bucket_name: str = "fastai-sites"
     region_name: str = "us-east-1"
-    connect_timeout: PositiveInt | None = None
-    read_timeout: PositiveInt | None = None
-    max_pool_connections: PositiveInt | None = None
+    connect_timeout: PositiveInt = 5
+    read_timeout: PositiveInt = 60
+    max_pool_connections: PositiveInt = 10
 
 
 class GotenbergSettings(BaseModel):
