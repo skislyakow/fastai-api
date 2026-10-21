@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import AnyHttpUrl, BaseModel, ConfigDict, Field, SecretStr
+from pydantic import AnyHttpUrl, BaseModel, ConfigDict, PositiveInt, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 SCREENSHOT_FORMAT = Literal["png", "jpeg", "webp"]
@@ -9,8 +9,8 @@ SCREENSHOT_FORMAT = Literal["png", "jpeg", "webp"]
 class DeepSeekSettings(BaseModel):
     model_config = ConfigDict(extra="forbid")
     api_key: SecretStr
-    max_connections: int | None = Field(default=None, gt=0)
-    timeout: int | None = Field(default=None, gt=0)
+    max_connections: PositiveInt | None = None
+    timeout: PositiveInt | None = None
     base_url: AnyHttpUrl | None = None
     model: str | None = None
 
@@ -18,8 +18,8 @@ class DeepSeekSettings(BaseModel):
 class UnsplashSettings(BaseModel):
     model_config = ConfigDict(extra="forbid")
     api_key: SecretStr
-    max_connections: int | None = Field(default=None, gt=0)
-    timeout: int | None = Field(default=None, gt=0)
+    max_connections: PositiveInt | None = None
+    timeout: PositiveInt | None = None
     proxy: AnyHttpUrl | None = None
 
 
@@ -30,18 +30,18 @@ class S3Settings(BaseModel):
     secret_access_key: SecretStr
     bucket_name: str = "fastai-sites"
     region_name: str = "us-east-1"
-    connect_timeout: int | None = Field(default=None, gt=0)
-    read_timeout: int | None = Field(default=None, gt=0)
-    max_pool_connections: int | None = Field(default=None, gt=0)
+    connect_timeout: PositiveInt | None = None
+    read_timeout: PositiveInt | None = None
+    max_pool_connections: PositiveInt | None = None
 
 
 class GotenbergSettings(BaseModel):
     model_config = ConfigDict(extra="forbid")
     endpoint_url: AnyHttpUrl
-    max_connections: int = Field(default=5, gt=0)
-    timeout: int = Field(default=10, gt=0)
-    width: int = Field(default=1280, gt=0)
-    wait_delay: int = Field(default=8, gt=0)
+    max_connections: PositiveInt = 5
+    timeout: PositiveInt = 10
+    width: PositiveInt = 1280
+    wait_delay: PositiveInt = 8
     default_screenshot_format: SCREENSHOT_FORMAT = "jpeg"
 
 
