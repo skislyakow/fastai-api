@@ -404,7 +404,7 @@ GOTENBERG__DEFAULT_SCREENSHOT_FORMAT=jpeg   # png | jpeg | webp
 #### Ручная загрузка первых файлов
 
 Фронтенд показывает превью сгенерированных сайтов: код HTML и скриншот. Ссылки
-на эти файлы в коде формирует `s3_urls()` в `src/services/site_service.py` и отдаёт их
+на эти файлы в коде формирует `s3_urls()` в `src/clients/s3.py` и отдаёт их
 в API как `htmlCodeUrl` / `htmlCodeDownloadUrl` / `screenshotUrl` — по ним
 фронтенд загружает превью и картинку. Файлы должны лежать в бакете заранее,
 иначе превью и скриншоты вернут `404` и фронтенд будет выглядеть сломанным.
@@ -429,7 +429,7 @@ http://localhost:9000/fastai-sites/index.png    — скриншот
 
 Формат адреса: `{S3__ENDPOINT_URL}/{S3__BUCKET_NAME}/{key}`.
 
-Ссылки, которые отдаёт код (`s3_urls()` в `src/services/site_service.py`:
+Ссылки, которые отдаёт код (`s3_urls()` в `src/clients/s3.py`:
 `htmlCodeUrl`, `htmlCodeDownloadUrl`, `screenshotUrl`), ведут на ключи
 `sites/1/index.html` и `screenshot.jpg` — первый загружайте в папку `sites/1/`,
 второй в корень бакета. Без них превью вернёт `404` и фронтенд будет выглядеть

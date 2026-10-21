@@ -11,16 +11,10 @@ from schemas import (
     SiteGenerationRequest,
     SiteResponse,
 )
-from services.site_service import (
-    SITE_HTML_PATH,
-    SITES,
-    build_site,
-    create_mock_site,
-    get_next_id,
-    relay_html,
-    run_in_background,
-    stream_queue,
-)
+from services.background import run_in_background
+from services.generation import relay_html, stream_queue
+from services.page_generator import SITE_HTML_PATH
+from services.sites import SITES, build_site, create_mock_site, get_next_id
 
 HTML_STUB_PATH = Path(__file__).resolve().parent.parent.parent / "stub" / "index.html"
 SCREENSHOT_PATH = Path(__file__).resolve().parent.parent.parent / "stub" / "screenshot.jpg"

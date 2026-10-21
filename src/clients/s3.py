@@ -5,8 +5,17 @@ from urllib.parse import quote, urlencode
 import aioboto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
+from pydantic import AnyHttpUrl
 
 from config.env_settings import settings
+
+SCREENSHOT_FORMATS = {
+    "png": ("image/png", "png"),
+    "jpeg": ("image/jpeg", "jpg"),
+    "webp": ("image/webp", "webp"),
+}
+SCREENSHOT_MIME, SCREENSHOT_EXT = SCREENSHOT_FORMATS[settings.gotenberg.default_screenshot_format]
+SCREENSHOT_KEY = f"screenshot.{SCREENSHOT_EXT}"
 
 
 def build_site_html_key(site_id: int) -> str:
@@ -50,6 +59,21 @@ def build_object_url(
         },
     )
     return f"{base_url}?{query}"
+
+
+def s3_urls(site_id: int) -> tuple[AnyHttpUrl, AnyHttpUrl, AnyHttpUrl]:
+    s3 = settings.s3
+    endpoint_url = str(s3.endpoint_url)
+    html_key = build_site_html_key(site_id)
+    html_url = build_object_url(endpoint_url, s3.bucket_name, html_key)
+    download_url = build_object_url(
+        endpoint_url,
+        s3.bucket_name,
+        html_key,
+        attachment_filename="index.html",
+    )
+    screenshot_url = build_object_url(endpoint_url, s3.bucket_name, SCREENSHOT_KEY)
+    return AnyHttpUrl(html_url), AnyHttpUrl(download_url), AnyHttpUrl(screenshot_url)
 
 
 def create_s3_client() -> Any:

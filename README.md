@@ -120,7 +120,7 @@ headless-браузера.
 
 Как это работает:
 
-1. `relay_html()` в `src/services/site_service.py` после сохранения HTML вызывает
+1. `relay_html()` в `src/services/generation.py` после сохранения HTML вызывает
    `render_screenshot()` из `src/clients/gotenberg.py`.
 2. `render_screenshot()` отправляет итоговый HTML в Gotenberg
    (`ScreenshotHTMLRequest`, пакет `gotenberg-api`) и возвращает JPEG-байты.

@@ -6,12 +6,6 @@ from config.logging_config import get_logger
 
 logger = get_logger(__name__)
 
-SCREENSHOT_FORMATS = {
-    "png": ("image/png", "png"),
-    "jpeg": ("image/jpeg", "jpg"),
-    "webp": ("image/webp", "webp"),
-}
-
 
 async def render_screenshot(client: httpx.AsyncClient, html_code: str) -> bytes:
     gotenberg = settings.gotenberg
