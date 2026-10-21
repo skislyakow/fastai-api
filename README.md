@@ -120,11 +120,11 @@ headless-браузера.
 
 Как это работает:
 
-1. `relay_html()` в `src/site_service.py` после сохранения HTML вызывает
-   `render_screenshot()` из `src/gotenberg_client.py`.
+1. `relay_html()` в `src/services/site_service.py` после сохранения HTML вызывает
+   `render_screenshot()` из `src/clients/gotenberg.py`.
 2. `render_screenshot()` отправляет итоговый HTML в Gotenberg
    (`ScreenshotHTMLRequest`, пакет `gotenberg-api`) и возвращает JPEG-байты.
-3. `upload_screenshot()` из `src/s3_client.py` загружает их в бакет по
+3. `upload_screenshot()` из `src/clients/s3.py` загружает их в бакет по
    постоянному ключу `screenshot.jpg` с `ContentType="image/jpeg"` и
    `ContentDisposition="inline"`.
 
@@ -255,7 +255,7 @@ CONTRIBUTING).
 - `image/png` — для изображений в формате PNG.
 
 Пример кодовой загрузки — функции `upload_html()` и `upload_screenshot()` в
-`src/s3_client.py`.
+`src/clients/s3.py`.
 
 `Content-Disposition` определяет способ доступа к файлу по публичной ссылке:
 

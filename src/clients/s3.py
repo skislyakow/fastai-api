@@ -6,7 +6,7 @@ import aioboto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
 
-from env_settings import settings
+from config.env_settings import settings
 
 
 def build_site_html_key(site_id: int) -> str:

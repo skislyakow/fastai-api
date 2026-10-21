@@ -7,13 +7,13 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from html_page_generator import AsyncDeepseekClient, AsyncUnsplashClient
 
-from env_settings import settings
-from logging_config import get_logger, setup_logging
-from page_generator import build_deepseek_client_kwargs, build_unsplash_client_kwargs
+from clients.s3 import create_s3_client, ensure_bucket
+from config.env_settings import settings
+from config.logging_config import get_logger, setup_logging
 from routers.sites import router as sites_router
 from routers.users import router as users_router
-from s3_client import create_s3_client, ensure_bucket
-from site_service import cancel_background_tasks
+from services.page_generator import build_deepseek_client_kwargs, build_unsplash_client_kwargs
+from services.site_service import cancel_background_tasks
 
 logger = get_logger(__name__)
 STATIC_DIR = Path(__file__).parent / "static"

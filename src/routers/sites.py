@@ -4,14 +4,14 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 
-from env_settings import settings
+from config.env_settings import settings
 from schemas import (
     CreateSiteRequest,
     GeneratedSitesResponse,
     SiteGenerationRequest,
     SiteResponse,
 )
-from site_service import (
+from services.site_service import (
     SITE_HTML_PATH,
     SITES,
     build_site,

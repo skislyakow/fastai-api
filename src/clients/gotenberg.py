@@ -1,8 +1,8 @@
 import httpx
 from gotenberg_api import GotenbergServerError, ScreenshotHTMLRequest
 
-from env_settings import settings
-from logging_config import get_logger
+from config.env_settings import settings
+from config.logging_config import get_logger
 
 logger = get_logger(__name__)
 

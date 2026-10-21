@@ -24,12 +24,12 @@ from langchain_deepseek import ChatDeepSeek
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.prebuilt import ToolNode, create_react_agent
 
-from env_settings import settings
-from logging_config import get_logger
+from config.env_settings import settings
+from config.logging_config import get_logger
 
 logger = get_logger(__name__)
 
-SITE_HTML_PATH = Path(__file__).resolve().parent.parent / "index.html"
+SITE_HTML_PATH = Path(__file__).resolve().parent.parent.parent / "index.html"
 DEFAULT_PROMPT = (
     "Личная страница fullstack Python-разработчика. Современный дизайн, тёмная тема, "
     "плавные анимации заголовков и параллакс-фон. Секции: вверху имя и роль с фото и "

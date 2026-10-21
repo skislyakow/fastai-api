@@ -6,11 +6,11 @@ from typing import Any
 import httpx
 from pydantic import AnyHttpUrl
 
-from env_settings import settings
-from gotenberg_client import SCREENSHOT_FORMATS, render_screenshot
-from page_generator import SITE_HTML_PATH, stream_site_html
-from s3_client import build_object_url, build_site_html_key, upload_html, upload_screenshot
+from clients.gotenberg import SCREENSHOT_FORMATS, render_screenshot
+from clients.s3 import build_object_url, build_site_html_key, upload_html, upload_screenshot
+from config.env_settings import settings
 from schemas import SiteResponse
+from services.page_generator import SITE_HTML_PATH, stream_site_html
 
 SITES: dict[int, SiteResponse] = {}
 BACKGROUND_TASKS: set[asyncio.Task[None]] = set()

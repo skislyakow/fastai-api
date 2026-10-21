@@ -341,7 +341,7 @@ $ curl -sf http://localhost:9000/minio/health/ready   # → 200
 #### 7. Настройка бэкенда
 
 Заполните в `.env` группу `S3` (обязательна, значения по умолчанию смотрите
-в `src/env_settings.py`):
+в `src/config/env_settings.py`):
 
 ```shell
 S3__ENDPOINT_URL=http://localhost:9000
@@ -369,8 +369,8 @@ Unsplash (пакет `html-page-generator`) и HTTP-клиент Gotenberg (`htt
 
 После каждой генерации сайта приложение рендерит его скриншот через
 [Gotenberg](https://gotenberg.dev/): итоговый HTML отправляется в
-`render_screenshot()` (`src/gotenberg_client.py`), а готовый JPEG загружается
-в бакет через `upload_screenshot()` (`src/s3_client.py`) по постоянному ключу
+`render_screenshot()` (`src/clients/gotenberg.py`), а готовый JPEG загружается
+в бакет через `upload_screenshot()` (`src/clients/s3.py`) по постоянному ключу
 `SCREENSHOT_KEY = "screenshot.jpg"`.
 
 Заполните в `.env` группу `Gotenberg`:
@@ -404,7 +404,7 @@ GOTENBERG__DEFAULT_SCREENSHOT_FORMAT=jpeg   # png | jpeg | webp
 #### Ручная загрузка первых файлов
 
 Фронтенд показывает превью сгенерированных сайтов: код HTML и скриншот. Ссылки
-на эти файлы в коде формирует `s3_urls()` в `src/site_service.py` и отдаёт их
+на эти файлы в коде формирует `s3_urls()` в `src/services/site_service.py` и отдаёт их
 в API как `htmlCodeUrl` / `htmlCodeDownloadUrl` / `screenshotUrl` — по ним
 фронтенд загружает превью и картинку. Файлы должны лежать в бакете заранее,
 иначе превью и скриншоты вернут `404` и фронтенд будет выглядеть сломанным.
@@ -429,7 +429,7 @@ http://localhost:9000/fastai-sites/index.png    — скриншот
 
 Формат адреса: `{S3__ENDPOINT_URL}/{S3__BUCKET_NAME}/{key}`.
 
-Ссылки, которые отдаёт код (`s3_urls()` в `src/site_service.py`:
+Ссылки, которые отдаёт код (`s3_urls()` в `src/services/site_service.py`:
 `htmlCodeUrl`, `htmlCodeDownloadUrl`, `screenshotUrl`), ведут на ключи
 `sites/1/index.html` и `screenshot.jpg` — первый загружайте в папку `sites/1/`,
 второй в корень бакета. Без них превью вернёт `404` и фронтенд будет выглядеть
@@ -446,7 +446,7 @@ http://localhost:9000/fastai-sites/screenshot.jpg       — скриншот п�
 
 #### Загрузка файлов из python-кода
 
-Загрузка файлов в бакет выполняется кодом приложения — см. `src/s3_client.py`.
+Загрузка файлов в бакет выполняется кодом приложения — см. `src/clients/s3.py`.
 
 При загрузке через `put_object` обязательно указывайте:
 
@@ -459,7 +459,7 @@ MIME-типы, используемые в проекте:
 - `text/html` — HTML-файлы (например, `hello.html`, `sites/1/index.html`);
 - `image/jpeg` — скриншоты (`screenshot.jpg`).
 
-В коде приложения загрузка уже реализована в `src/s3_client.py`:
+В коде приложения загрузка уже реализована в `src/clients/s3.py`:
 
 - `upload_html()` — указывает `ContentType="text/html"` и
   `ContentDisposition="inline"`;
