@@ -1,9 +1,7 @@
-import asyncio
 import uuid
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 import anyio
 import anyio.to_thread
@@ -12,14 +10,9 @@ from html_page_generator import (
     AsyncPageGenerator,
 )
 from html_page_generator._html_page_generator import (
-    FIND_IMAGES_PROMPT,
-    GENERATE_HTML_PROMPT,
-    REGENERATE_HTML_PROMPT,
     HtmlPage,
     get_images_from_unsplash,
 )
-from langchain_core.messages import ToolMessage
-from langchain_core.runnables import RunnableConfig
 from langchain_deepseek import ChatDeepSeek
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.prebuilt import ToolNode, create_react_agent
@@ -30,16 +23,6 @@ from config.logging_config import get_logger
 logger = get_logger(__name__)
 
 SITE_HTML_PATH = Path(__file__).resolve().parent.parent.parent / "index.html"
-DEFAULT_PROMPT = (
-    "Личная страница fullstack Python-разработчика. Современный дизайн, тёмная тема, "
-    "плавные анимации заголовков и параллакс-фон. Секции: вверху имя и роль с фото и "
-    "приветствием, «Обо мне» с блоком навыков (Python, FastAPI, Django, PostgreSQL, "
-    "SQLAlchemy, Docker, Git, JavaScript), «Проекты» — карточки с примерами работ и "
-    "ссылками, «Услуги» — что я делаю (бэкенд, API, автоматизация, деплой), внизу "
-    "секция контактов с формой и ссылками на Telegram/GitHub. Используй изображения "
-    "в тематике программирования и технологий. Адаптивная вёрстка, чтобы сайт хорошо "
-    "выглядел и на телефоне."
-)
 MAX_ATTEMPTS = 3
 
 
@@ -48,22 +31,26 @@ def _log_chunk(chunk: str, *, debug: bool) -> None:
         logger.debug("%s", chunk)
 
 
-async def ainvoke_with_retry(
-    agent: Any,
-    message: dict[str, str],
+async def _stream_with_retry(
+    generator: AsyncPageGenerator,
+    stream_factory: Callable[[], AsyncGenerator[str]],
     *,
-    temperature: float,
-    config: RunnableConfig,
-) -> dict[str, Any]:
+    debug: bool,
+) -> AsyncGenerator[str]:
     last_exc: Exception | None = None
     for attempt in range(1, MAX_ATTEMPTS + 1):
-        config.setdefault("configurable", {})["thread_id"] = uuid.uuid4().hex
+        if attempt > 1:
+            generator.config.setdefault("configurable", {})["thread_id"] = uuid.uuid4().hex
+        emitted = False
         try:
-            return await agent.ainvoke(
-                input={"messages": [message], "temperature": temperature},
-                config=config,
-            )
+            async for chunk in stream_factory():
+                emitted = True
+                _log_chunk(chunk, debug=debug)
+                yield chunk
+            return
         except Exception as exc:  # noqa: BLE001
+            if emitted:
+                raise
             last_exc = exc
             logger.warning("Попытка %s/%s: %s", attempt, MAX_ATTEMPTS, exc)
     raise RuntimeError(f"Генерация не удалась после {MAX_ATTEMPTS} попыток.") from last_exc
@@ -85,7 +72,7 @@ def build_unsplash_client_kwargs(unsplash_settings: UnsplashSettings) -> dict[st
     return kwargs
 
 
-class StreamPageGenerator(AsyncPageGenerator):
+class ConfiguredPageGenerator(AsyncPageGenerator):
     def __init__(self, *, debug_mode: bool = False) -> None:
         client = AsyncDeepseekClient.get_initialized_instance()
         model = ChatDeepSeek(
@@ -106,55 +93,8 @@ class StreamPageGenerator(AsyncPageGenerator):
         )
         self.config = {"configurable": {"thread_id": uuid.uuid4().hex}}
 
-    async def search_images(self, user_prompt: str) -> AsyncGenerator[str]:
-        message = {
-            "role": "user",
-            "content": FIND_IMAGES_PROMPT.format(user_prompt=user_prompt),
-        }
-        response = await self.agent.ainvoke(
-            input={"messages": [message], "temperature": 0.1},
-            config=self.config,
-        )
-        for msg in response["messages"]:
-            if isinstance(msg, ToolMessage) and msg.content:
-                yield f"{msg.content}\n"
 
-    async def generate_html(self, user_prompt: str) -> AsyncGenerator[str]:
-        message = {
-            "role": "user",
-            "content": GENERATE_HTML_PROMPT.format(
-                user_prompt=user_prompt,
-                current_year=self.current_year,
-            ),
-        }
-        response = await ainvoke_with_retry(
-            self.agent,
-            message,
-            temperature=2,
-            config=self.config,
-        )
-        html_code = response["messages"][-1].content
-        self.html_page.html_code = html_code
-        for i in range(0, len(html_code), 4000):
-            yield html_code[i : i + 4000]
-            await asyncio.sleep(0.2)
-
-    async def regenerate_html(self) -> AsyncGenerator[str]:
-        message = {"role": "user", "content": REGENERATE_HTML_PROMPT}
-        response = await ainvoke_with_retry(
-            self.agent,
-            message,
-            temperature=2,
-            config=self.config,
-        )
-        html_code = response["messages"][-1].content
-        self.html_page.html_code = html_code
-        for i in range(0, len(html_code), 4000):
-            yield html_code[i : i + 4000]
-            await asyncio.sleep(0.2)
-
-
-async def save_generated_site(generator: StreamPageGenerator) -> None:
+async def save_generated_site(generator: AsyncPageGenerator) -> None:
     if generator.html_page.html_code:
         with anyio.CancelScope(shield=True):
             await anyio.to_thread.run_sync(
@@ -165,23 +105,25 @@ async def save_generated_site(generator: StreamPageGenerator) -> None:
 
 
 async def _stream_html(
-    generator: StreamPageGenerator,
+    generator: AsyncPageGenerator,
     prompt: str,
     *,
     debug: bool,
 ) -> AsyncGenerator[str]:
-    async for chunk in generator.generate_html(prompt):
-        _log_chunk(chunk, debug=debug)
+    async for chunk in _stream_with_retry(
+        generator,
+        lambda: generator.generate_html(prompt),
+        debug=debug,
+    ):
         yield chunk
     await generator.check_html()
     if not generator.html_page.is_valid:
-        async for chunk in generator.regenerate_html():
-            _log_chunk(chunk, debug=debug)
+        async for chunk in _stream_with_retry(generator, generator.regenerate_html, debug=debug):
             yield chunk
 
 
 async def stream_site_html(prompt: str, *, debug: bool) -> AsyncGenerator[str]:
-    generator = StreamPageGenerator(debug_mode=debug)
+    generator = ConfiguredPageGenerator(debug_mode=debug)
     try:
         async for chunk in _stream_html(generator, prompt, debug=debug):
             yield chunk

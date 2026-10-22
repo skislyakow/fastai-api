@@ -114,7 +114,7 @@ def view_site_html(site_id: int, download: bool = False) -> FileResponse:
     "/{site_id}/screenshot",
     summary="Скриншот сайта",
 )
-def get_site_screenshot(request: Request, site_id: int) -> FileResponse:
+def get_site_screenshot(site_id: int) -> FileResponse:
     return FileResponse(SCREENSHOT_PATH, media_type="image/jpeg")
 
 
