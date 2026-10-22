@@ -1,6 +1,7 @@
 import uuid
 from collections.abc import AsyncGenerator, Callable
 from pathlib import Path
+from typing import Any
 
 import anyio
 import anyio.to_thread
@@ -9,6 +10,8 @@ from html_page_generator import (
     AsyncPageGenerator,
 )
 from html_page_generator._html_page_generator import get_images_from_unsplash
+from langchain_core.messages import AIMessageChunk
+from langchain_core.runnables import RunnableConfig
 from langchain_deepseek import ChatDeepSeek
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.prebuilt import ToolNode, create_react_agent
@@ -40,6 +43,8 @@ async def _stream_with_retry(
         emitted = False
         try:
             async for chunk in stream_factory():
+                if not chunk:
+                    continue
                 emitted = True
                 _log_chunk(chunk, debug=debug)
                 yield chunk
@@ -68,6 +73,24 @@ def build_unsplash_client_kwargs(unsplash_settings: UnsplashSettings) -> dict[st
     return kwargs
 
 
+class AssistantOnlyAgent:
+    def __init__(self, agent: Any) -> None:
+        self._agent = agent
+
+    async def astream(
+        self,
+        *,
+        config: RunnableConfig,
+        **kwargs: Any,
+    ) -> AsyncGenerator[tuple[AIMessageChunk, dict[str, Any]]]:
+        async for message, metadata in self._agent.astream(config=config, **kwargs):
+            if isinstance(message, AIMessageChunk):
+                yield message, metadata
+
+    async def ainvoke(self, *, config: RunnableConfig, **kwargs: Any) -> Any:
+        return await self._agent.ainvoke(config=config, **kwargs)
+
+
 class ConfiguredPageGenerator(AsyncPageGenerator):
     def __init__(self, *, debug_mode: bool = False) -> None:
         super().__init__(debug_mode=debug_mode)
@@ -82,11 +105,13 @@ class ConfiguredPageGenerator(AsyncPageGenerator):
                 "temperature": 0.7,
             },
         )
-        self.agent = create_react_agent(
-            model,
-            tools=ToolNode([get_images_from_unsplash]),
-            checkpointer=InMemorySaver(),
-            debug=debug_mode,
+        self.agent: Any = AssistantOnlyAgent(
+            create_react_agent(
+                model,
+                tools=ToolNode([get_images_from_unsplash]),
+                checkpointer=InMemorySaver(),
+                debug=debug_mode,
+            ),
         )
 
 
@@ -98,6 +123,11 @@ async def save_generated_site(generator: AsyncPageGenerator) -> None:
                 generator.html_page.html_code,
                 "utf-8",
             )
+
+
+async def remove_generated_site() -> None:
+    if SITE_HTML_PATH.exists():
+        await anyio.to_thread.run_sync(SITE_HTML_PATH.unlink)
 
 
 async def _stream_html(
@@ -119,13 +149,16 @@ async def _stream_html(
 
 
 async def stream_site_html(prompt: str, *, debug: bool) -> AsyncGenerator[str]:
+    await remove_generated_site()
     generator = ConfiguredPageGenerator(debug_mode=debug)
+    emitted = False
     try:
         async for chunk in _stream_html(generator, prompt, debug=debug):
+            emitted = True
             yield chunk
     except Exception as exc:
         logger.error("ОШИБКА ГЕНЕРАЦИИ: %s", exc)
-        if not generator.html_page.html_code:
+        if not emitted:
             yield f"<!DOCTYPE html><html><body><h1>Не удалось сгенерировать страницу</h1><p>{exc}</p></body></html>"
     finally:
         await save_generated_site(generator)
