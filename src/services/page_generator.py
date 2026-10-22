@@ -1,6 +1,5 @@
 import uuid
 from collections.abc import AsyncGenerator, Callable
-from datetime import datetime
 from pathlib import Path
 
 import anyio
@@ -9,10 +8,7 @@ from html_page_generator import (
     AsyncDeepseekClient,
     AsyncPageGenerator,
 )
-from html_page_generator._html_page_generator import (
-    HtmlPage,
-    get_images_from_unsplash,
-)
+from html_page_generator._html_page_generator import get_images_from_unsplash
 from langchain_deepseek import ChatDeepSeek
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.prebuilt import ToolNode, create_react_agent
@@ -74,24 +70,24 @@ def build_unsplash_client_kwargs(unsplash_settings: UnsplashSettings) -> dict[st
 
 class ConfiguredPageGenerator(AsyncPageGenerator):
     def __init__(self, *, debug_mode: bool = False) -> None:
+        super().__init__(debug_mode=debug_mode)
         client = AsyncDeepseekClient.get_initialized_instance()
-        model = ChatDeepSeek(
-            model=client.deepseek_model,
-            api_key=client.deepseek_api_key,
-            http_async_client=client,
-            api_base=client.deepseek_base_url,  # type: ignore[reportCallIssue]
-            max_tokens=32768,
-            temperature=0.7,
+        model = ChatDeepSeek.model_validate(
+            {
+                "model": client.deepseek_model,
+                "api_key": client.deepseek_api_key,
+                "http_async_client": client,
+                "base_url": client.deepseek_base_url,
+                "max_tokens": 32768,
+                "temperature": 0.7,
+            },
         )
-        self.html_page = HtmlPage()
-        self.current_year = datetime.now().year
         self.agent = create_react_agent(
             model,
             tools=ToolNode([get_images_from_unsplash]),
             checkpointer=InMemorySaver(),
             debug=debug_mode,
         )
-        self.config = {"configurable": {"thread_id": uuid.uuid4().hex}}
 
 
 async def save_generated_site(generator: AsyncPageGenerator) -> None:
