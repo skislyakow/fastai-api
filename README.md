@@ -6,6 +6,7 @@
 [![uv](https://img.shields.io/badge/uv-package%20manager-DE5FA3?logo=uv&logoColor=white)](https://docs.astral.sh/uv/)
 [![Ruff](https://img.shields.io/badge/Ruff-linter-D7FF64?logo=ruff&logoColor=black)](https://docs.astral.sh/ruff/)
 [![pre-commit](https://img.shields.io/badge/pre-commit-hooks-D7FF64)](https://pre-commit.com/)
+[![Lint](https://github.com/skislyakow/fastai-api/actions/workflows/lint.yml/badge.svg)](https://github.com/skislyakow/fastai-api/actions/workflows/lint.yml)
 
 [![DeepSeek](https://img.shields.io/badge/DeepSeek-LLM-4D6BFE)](https://platform.deepseek.com/)
 [![Unsplash](https://img.shields.io/badge/Unsplash-images-111111?logo=unsplash&logoColor=white)](https://unsplash.com/developers)
@@ -46,8 +47,8 @@ $ fastapi dev src/main.py
   (или `http://0.0.0.0:8000`), строка `Application startup complete.`;
 - **Нет неожиданных ошибок** — в логе отсутствуют `ERROR` / `Traceback`;
 - **Результат соответствует инструкции** — в браузере открывается страница
-  http://127.0.0.1:8000/docs (Swagger-документация API) и/или главная страница
-  фронтенда http://127.0.0.1:8000/.
+  http://127.0.0.1:8000/frontend-api/docs (Swagger-документация API) и/или
+  главная страница фронтенда http://127.0.0.1:8000/.
 
 Пример лога успешного запуска (может отличаться деталями):
 
@@ -55,6 +56,26 @@ $ fastapi dev src/main.py
 INFO:     Uvicorn running on http://127.0.0.1:8000
 INFO:     Application startup complete.
 ```
+
+## API
+
+Все эндпоинты доступны с префиксом `/frontend-api`; интерактивная документация —
+[`/frontend-api/docs`](http://127.0.0.1:8000/frontend-api/docs).
+
+| Метод | Путь | Описание |
+|---|---|---|
+| `GET` | `/frontend-api/users/me` | Данные текущего пользователя |
+| `GET` | `/frontend-api/sites/my` | Список сайтов пользователя |
+| `POST` | `/frontend-api/sites/create` | Создать сайт и получить его `id` |
+| `POST` | `/frontend-api/sites/{site_id}/generate` | Сгенерировать HTML (стрим) |
+| `GET` | `/frontend-api/sites/{site_id}/html` | Просмотр HTML (`?download=true` — скачать) |
+| `GET` | `/frontend-api/sites/{site_id}/screenshot` | Скриншот сайта |
+| `GET` | `/frontend-api/sites/{site_id}` | Информация о сайте |
+
+Генерация выполняется в фоне: `POST /sites/{site_id}/generate` сразу открывает
+поток и передаёт HTML по мере создания, а сохранение в S3 и скриншот формируются
+фоновой задачей. Пока файлы не загружены, эндпоинты просмотра отдают заглушки из
+папки `stub/`.
 
 ## Настройка переменных окружения
 
@@ -403,3 +424,7 @@ http://localhost:9000/fastai-sites/screenshot.jpg
 
 - Статья [aioboto3](https://gitlab.dvmn.org/root/fastapi-articles/-/wikis/aioboto3).
 - Статья [furl vs urllib](https://gitlab.dvmn.org/root/fastapi-articles/-/wikis/furl-vs-urlib).
+
+## Лицензия
+
+Проект распространяется по лицензии [MIT](LICENSE).
